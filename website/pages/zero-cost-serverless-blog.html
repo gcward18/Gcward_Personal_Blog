@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero Cost Serverless Blog</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 750px; margin: 40px auto; padding: 0 20px; color: #222; }
+        h1 { color: #111; border-bottom: 2px solid #eaeaea; padding-bottom: 10px; }
+        h2 { margin-top: 30px; color: #1a56db; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        pre { background: #2d3748; color: #fff; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: none; color: inherit; padding: 0; }
+        a { color: #1a56db; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <p><a href="/index.html">&larr; Back to Home</a></p>
+    <article>
+        <h1>Building a Zero-Cost Serverless Blog with AWS CDK, S3, and Python</h1>
+<p>Deploying a personal blog or technical portfolio shouldn't mean managing virtual servers or paying monthly hosting subscriptions. By combining <strong>AWS CDK (Python)</strong>, <strong>Amazon S3</strong>, and <strong>Amazon CloudFront</strong>, you can build a serverless static blog that costs fractions of a cent to host and offers near-infinite scalability.</p>
+<hr />
+<h2>1. The Architecture Overview</h2>
+<p>Instead of configuring an S3 bucket as a public website endpoint, the security best practice is to keep the <strong>S3 bucket completely private</strong> (<code>BlockPublicAccess.BLOCK_ALL</code>). </p>
+<pre><code class="language-text">[ Reader ] ---&gt; [ CloudFront CDN (HTTPS) ] ---&gt; [ S3 Bucket (Private Content) ]
+                                 ▲
+                                 │ (Origin Access Control)
+</code></pre>
+<ul>
+<li><strong>Amazon S3:</strong> Stores compiled HTML, CSS, and media assets securely.</li>
+<li><strong>Amazon CloudFront:</strong> Acts as a Content Delivery Network (CDN) to serve site traffic globally over HTTPS with ultra-low latency.</li>
+<li><strong>Origin Access Control (OAC):</strong> Restricts access so users cannot bypass CloudFront or view bucket contents directly.</li>
+</ul>
+<hr />
+<h2>2. Infrastructure as Code: Python CDK Stack</h2>
+<p>This Python CDK stack provisions the private S3 bucket, configures CloudFront OAC, sets up an automated deployment pipeline for local web assets, and logs the public live URL.</p>
+<pre><code class="language-python">import aws_cdk as cdk
+from aws_cdk import (
+    Stack,
+    CfnOutput,
+    RemovalPolicy,
+    aws_s3 as s3,
+    aws_s3_deployment as s3deploy,
+    aws_cloudfront as cloudfront,
+    aws_cloudfront_origins as origins,
+)
+from constructs import Construct
+
+class BlogInfrastructureStack(Stack):
+
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -&gt; None:
+        super().__init__(scope, construct_id, **kwargs)
+
+        # 1. Private S3 Bucket for static site assets
+        site_bucket = s3.Bucket(
+            self, &quot;BlogAssetBucket&quot;,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,  # Max security
+            removal_policy=RemovalPolicy.DESTROY,                 # Teardown on cdk destroy
+            auto_delete_objects=True                               # Empty bucket prior to deletion
+        )
+
+        # 2. CloudFront CDN Distribution using Origin Access Control (OAC)
+        distribution = cloudfront.Distribution(
+            self, &quot;BlogDistribution&quot;,
+            default_behavior=cloudfront.BehaviorOptions(
+                origin=origins.S3BucketOrigin.with_origin_access_control(site_bucket)
+            ),
+            default_root_object=&quot;index.html&quot;
+        )
+
+        # 3. Automatic Deployment of local site assets to S3
+        s3deploy.BucketDeployment(
+            self, &quot;DeployBlogAssets&quot;,
+            sources=[s3deploy.Source.asset(&quot;./website&quot;)],
+            destination_bucket=site_bucket,
+            distribution=distribution  # Auto-invalidates CloudFront cache on deploy
+        )
+
+        # 4. Output the public CloudFront URL
+        CfnOutput(
+            self, &quot;LiveBlogURL&quot;,
+            value=f&quot;https://{distribution.distribution_domain_name}&quot;,
+            description=&quot;Live HTTPS endpoint for the blog&quot;
+        )
+</code></pre>
+<hr />
+<h2>3. Automated Markdown Compilation Script</h2>
+<p>To avoid writing raw HTML manually for every article, use this lightweight Python build script. It parses markdown files (<code>.md</code>), wraps them in clean HTML, and populates your public deployment folder.</p>
+<pre><code class="language-python">import os
+import glob
+import markdown
+
+HTML_TEMPLATE = &quot;&quot;&quot;&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;{title}&lt;/title&gt;
+    &lt;style&gt;
+        body {{ font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif; line-height: 1.6; max-width: 750px; margin: 40px auto; padding: 0 20px; color: #222; }}
+        h1 {{ color: #111; border-bottom: 2px solid #eaeaea; padding-bottom: 10px; }}
+        h2 {{ margin-top: 30px; color: #1a56db; }}
+        code {{ background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: monospace; }}
+        pre {{ background: #2d3748; color: #fff; padding: 15px; border-radius: 6px; overflow-x: auto; }}
+        pre code {{ background: none; color: inherit; padding: 0; }}
+        a {{ color: #1a56db; text-decoration: none; }}
+        a:hover {{ text-decoration: underline; }}
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;p&gt;&lt;a href=&quot;/index.html&quot;&gt;&amp;larr; Back to Home&lt;/a&gt;&lt;/p&gt;
+    &lt;article&gt;
+        {content}
+    &lt;/article&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+&quot;&quot;&quot;
+
+def build_static_pages():
+    os.makedirs(&quot;./website&quot;, exist_ok=True)
+    os.makedirs(&quot;./posts&quot;, exist_ok=True)
+
+    md_parser = markdown.Markdown(extensions=['fenced_code', 'tables'])
+
+    for md_file in glob.glob(&quot;./posts/*.md&quot;):
+        filename = os.path.basename(md_file)
+        slug = os.path.splitext(filename)[0]
+
+        with open(md_file, &quot;r&quot;, encoding=&quot;utf-8&quot;) as f:
+            raw_markdown = f.read()
+
+        html_body = md_parser.convert(raw_markdown)
+        md_parser.reset()
+
+        page_title = slug.replace(&quot;-&quot;, &quot; &quot;).title()
+        formatted_html = HTML_TEMPLATE.format(title=page_title, content=html_body)
+
+        output_file = f&quot;./website/{slug}.html&quot;
+        with open(output_file, &quot;w&quot;, encoding=&quot;utf-8&quot;) as f:
+            f.write(formatted_html)
+
+        print(f&quot;Successfully compiled: {md_file} -&gt; {output_file}&quot;)
+
+if __name__ == &quot;__main__&quot;:
+    build_static_pages()
+</code></pre>
+<hr />
+<h2>4. Cost Control &amp; Safeguards</h2>
+<p>While S3 storage and CloudFront bandwidth fall within the <strong>AWS Free Tier</strong> for most small blogs (up to 1 TB of monthly outbound transfer), setting up an <strong>AWS Budget Alert</strong> prevents unexpected charges:</p>
+<pre><code class="language-python">from aws_cdk import aws_budgets as budgets
+
+budgets.CfnBudget(
+    self, &quot;MonthlyCostGuardrail&quot;,
+    budget=budgets.CfnBudget.BudgetDataProperty(
+        budget_name=&quot;BlogCostGuardrail&quot;,
+        budget_type=&quot;COST&quot;,
+        time_unit=&quot;MONTHLY&quot;,
+        budget_limit=budgets.CfnBudget.SpendProperty(amount=1, unit=&quot;USD&quot;)
+    ),
+    notifications_with_subscribers=[
+        budgets.CfnBudget.NotificationWithSubscribersProperty(
+            notification=budgets.CfnBudget.NotificationProperty(
+                comparison_operator=&quot;GREATER_THAN&quot;,
+                notification_type=&quot;ACTUAL&quot;,
+                threshold=100,
+                threshold_type=&quot;PERCENTAGE&quot;
+            ),
+            subscribers=[budgets.CfnBudget.SubscriberProperty(address=&quot;admin@example.com&quot;, subscription_type=&quot;EMAIL&quot;)]
+        )
+    ]
+)
+</code></pre>
+<hr />
+<h2>5. Deployment Workflow</h2>
+<ol>
+<li>Write your blog post in Markdown (<code>./posts/my-first-post.md</code>).</li>
+<li>Run <code>python build_site.py</code> to compile Markdown files to <code>./website/</code>.</li>
+<li>Execute <code>cdk deploy</code> to sync assets to AWS and refresh your live site.</li>
+</ol>
+    </article>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demystifying AWS CDK - Cloud Infrastructure in Code</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 750px; margin: 40px auto; padding: 0 20px; color: #222; }
+        h1 { color: #111; border-bottom: 2px solid #eaeaea; padding-bottom: 10px; }
+        h2 { margin-top: 30px; color: #1a56db; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        pre { background: #2d3748; color: #fff; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: none; color: inherit; padding: 0; }
+        .meta { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        a { color: #1a56db; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <p><a href="/index.html">&larr; Back to Home</a></p>
+    <h1>Demystifying AWS CDK: Infrastructure as Real Code</h1>
+    <p class="meta">Published: August 2026 | Topic: AWS Cloud Development Kit</p>
+
+    <p>Managing cloud infrastructure through JSON or YAML templates (CloudFormation or Terraform) often leads to massive, unmaintainable configuration files. The <strong>AWS Cloud Development Kit (CDK)</strong> changes this paradigm by letting you define infrastructure using object-oriented languages like Python and TypeScript.</p>
+
+    <h2>Why Use CDK Over Raw CloudFormation?</h2>
+    <ul>
+        <li><strong>Constructs & Defaults:</strong> CDK abstracts boilerplate setup. A single construct like <code>aws_s3.Bucket</code> configures sensible security defaults automatically.</li>
+        <li><strong>Type Safety & IDE Support:</strong> Catch configuration syntax errors during compilation rather than mid-deployment.</li>
+        <li><strong>Reusability:</strong> Create reusable custom constructs across your team or organization.</li>
+    </ul>
+
+    <h2>Key CDK Constructs Used in This Blog</h2>
+    <pre><code># Python CDK snippet creating an S3 bucket with CloudFront OAC
+site_bucket = s3.Bucket(
+    self, "BlogBucket",
+    block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+    removal_policy=RemovalPolicy.DESTROY
+)</code></pre>
+
+    <p>By coupling S3 for asset storage and CloudFront as a CDN, CDK allows you to provision serverless web infrastructure in fewer than 40 lines of Python code.</p>
+</body>
+</html>
