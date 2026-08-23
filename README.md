@@ -54,5 +54,6 @@ command.
  * `cdk deploy`      deploy this stack to your default AWS account/region
  * `cdk diff`        compare deployed stack with current state
  * `cdk docs`        open CDK documentation
+ * `pip instal --platform manylinux2014_x86_64 --target=lambda/llm --implementation cp --python-version 3.12 --only-binary=:all: --upgrade -r lambda/llm/requirements.txt` install requirements.txt dependencies to lambda 
 
 Enjoy!

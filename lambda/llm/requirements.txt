@@ -1,0 +1,6 @@
+boto3
+openai
+langchain-core
+langchain-openai
+langchain-tavily
+tavily-python
