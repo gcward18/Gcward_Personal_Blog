@@ -64,7 +64,7 @@ class BlogStack(Stack):
         # 5. Deploy website content
         s3deploy.BucketDeployment(
             self, "DeployWebsite",
-            sources=[s3deploy.Source.asset("./website")],
+            sources=[s3deploy.Source.asset("./my-react-blog/dist")],# Points to Vite dist folder
             destination_bucket=site_bucket,
             distribution=distribution
         )
