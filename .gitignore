@@ -8,3 +8,5 @@ __pycache__
 .cdk.staging
 cdk.out
 .env
+/my-react-blog/node_modules/
+/my-react-blog/dist/
