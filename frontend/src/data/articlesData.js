@@ -174,11 +174,11 @@ budgets.CfnBudget(
   },
   {
     id: 'aws-cdk',
-    siteName: 'System Architecture',
+    siteName: 'Why AWS CDK',
     siteUrl: '[https://thecuriousengineerblog.dev](https://thecuriousengineerblog.dev) › pages › aws-cdk',
     title: 'Demystifying AWS CDK: Infrastructure as Real Code',
     snippet: 'Managing cloud infrastructure through JSON or YAML templates often leads to unmaintainable configuration files. Learn how the AWS Cloud Development Kit allows you to define infrastructure...',
-    tags: ['Infrastructure as Code', 'Cloud Architecture'],
+    tags: ['IAC', 'Cloud Architecture'],
     date: '2026-08',
     category: 'AWS_CDK',
     content: `
