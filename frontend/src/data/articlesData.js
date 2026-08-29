@@ -203,5 +203,82 @@ site_bucket = s3.Bucket(
 
 By coupling S3 for asset storage and CloudFront as a CDN, CDK allows you to provision serverless web infrastructure in fewer than 40 lines of Python code.
 `
+  },
+  {
+    id: 'cosine-similarity',
+    siteName: 'Cosine Similarity',
+    siteUrl: '[https://thecuriousengineerblog.dev](https://thecuriousengineerblog.dev) › pages › cosine-similarity',
+    title: 'Light Bulb Moment: Cosine Similarity for finding nearest neighbors in high-dimensional vector space',
+    tags: ['AI', 'Embedding', 'LLM'],
+    date: '2026-08', // Fixed key spelling from data to date
+    category: 'AI',
+    content: `
+# RAG & Cosine Similarity: 
+
+### How Machines Measure Meaning
+
+Early into learning how Retrieval-Augmented Generation (RAG) works, I was faced with a fundamental question: 
+
+***how do we efficiently find document sections that are actually relevant to a user's prompt?*** 
+
+This is where cosine similarity comes into play. It provides a mathematical way to evaluate how similar two vectors are based on the direction they point in space: 
+- _1.0_ Identical direction (highest semantic similarity)
+- _0.5_ Moderate similarity / overlapping context
+- _0.0_ Orthogonal / completely unrelated
+
+Let's walk through the end-to-end RAG workflow to see exact step where cosine similarity powers semantic retrieval.
+
+RAG Sequence DiagramCode
+\`\`\`mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Workflow
+    participant Document
+    participant Chunk
+    participant Embedder
+    participant VectorStore as Vector Store
+    participant LLM
+
+    %% Ingestion Phase
+    rect rgb(240, 240, 240)
+        note over Document, VectorStore: Ingestion Phase
+        loop For each document
+            Document->>Chunk: Process into smaller sections
+            Chunk->>Embedder: Request vector embedding
+            Embedder-->>VectorStore: Store chunk & vector embedding
+        end
+    end
+
+    %% Query & Retrieval Phase
+    rect rgb(225, 238, 248)
+        note over User, LLM: Query & RAG Phase
+        User->>Workflow: Send prompt / query
+        Workflow->>Embedder: Embed user query
+        Embedder-->>Workflow: Return query vector
+        Workflow->>VectorStore: Query top-k relevant chunks (Cosine Similarity)
+        VectorStore-->>Workflow: Return top-k documents
+        Workflow->>LLM: Pass prompt + retrieved context
+        LLM-->>Workflow: Return generated response
+    end
+\`\`\`
+
+### Where Cosine Similarity Fits In
+Cosine similarity operates directly in _Step 6_ of the query phase. When searching for relevant context, the Vector Database evaluates the user query vector against thousands or millions of document chunk vectors. It calculates the cosine of the angle _($\\theta$)_ between the vectors, measuring directional similarity while ignoring vector magnitude (length):
+
+$$
+\\text{Cosine Similarity}(A, B) = \\cos(\\theta) = \\frac{A \\cdot B}{\\|A\\| \\|B\\|}
+$$
+
+### Why Geometric Math Works for Language
+It initially felt non-intuitive that a trigonometric function historically used for triangles and wave cycles could determine whether two sentences mean the same thing. 
+
+**The secret lies in the embedding model:** 
+
+Transformer networks take raw text and translate semantic concepts into high-dimensional numerical coordinates (often 768 to 1536 dimensions). Words and sentences with similar meanings (e.g., "king" and "queen", or "How to reset password" and "Forgot credential procedure") are placed near each other in this high-dimensional vector space. 
+
+Once text is converted to spatial coordinates, finding relevant content transforms from a messy keyword matching problem into a precise k-nearest neighbors (k-NN) search. By ignoring the magnitude of the vector (which might scale with text length), cosine similarity focuses purely on semantic direction—giving us an accurate, scale-invariant score for context retrieval.
+`
   }
+
 ];
