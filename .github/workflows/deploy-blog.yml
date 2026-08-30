@@ -1,0 +1,60 @@
+name: Deploy Curious Developer Blog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "stacks/blog_stack.py"
+      - "lambda/publisher/**"
+      - "app.py"
+      - "requirements.txt"
+      - ".github/workflows/deploy-blog.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: curious-developer-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deployment dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          npm install --global aws-cdk
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Build and deploy approved content
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: us-east-1
+          ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+          DOMAIN_NAME: thecuriousengineerblog.dev
+          GITHUB_OWNER: gcward18
+          GITHUB_REPOSITORY: Gcward_Personal_Blog
+          GITHUB_TOKEN_SECRET_NAME: curious-developer/github-token
+          COGNITO_DOMAIN_PREFIX: ${{ secrets.COGNITO_DOMAIN_PREFIX }}
+        run: cdk deploy BlogStack --require-approval never
