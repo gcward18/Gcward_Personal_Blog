@@ -1,6 +1,194 @@
 // src/articlesData.js
 export const ARTICLES = [
   {
+    id: 'aws-cross-account-iam-roles',
+    siteName: 'AWS Identity & Access',
+    siteUrl: 'thecuriousengineerblog.dev › pages › aws-cross-account-iam-roles',
+    title: 'How AWS IAM Roles Enable Secure Cross-Account Access',
+    snippet: 'Learn how trust policies, identity policies, and AWS STS work together to let a principal in one AWS account securely access resources in another.',
+    tags: ['AWS IAM', 'Security', 'Cross-Account', 'AWS CDK'],
+    date: '2026-08',
+    category: 'AWS_SECURITY',
+    content: `
+AWS accounts are useful security boundaries. A common design is to keep workloads, shared services, security tooling, and production environments in separate accounts. But separation creates a practical question: **how can an identity in one account access resources in another without sharing long-lived credentials?**
+
+The answer is an **IAM role in the destination account** and temporary credentials issued by **AWS Security Token Service (STS)**.
+
+## The scenario
+
+Imagine two accounts:
+
+* **Account A — Application account (111111111111):** contains a workload role named DeploymentRole.
+* **Account B — Production account (222222222222):** contains a private S3 bucket and a role named ProductionReadRole.
+
+The application identity does not receive credentials for Account B. Instead, it asks STS to assume the role that Account B created for this purpose.
+
+~~~mermaid
+sequenceDiagram
+    autonumber
+    participant Caller as DeploymentRole<br/>Account A
+    participant STS as AWS STS
+    participant Role as ProductionReadRole<br/>Account B
+    participant S3 as Production S3 Bucket<br/>Account B
+
+    Caller->>STS: AssumeRole(ProductionReadRole)
+    STS->>Role: Evaluate role trust policy
+    Role-->>STS: Caller is trusted
+    STS-->>Caller: Temporary access key, secret, and session token
+    Caller->>S3: GetObject using temporary credentials
+    S3-->>Caller: Object (if role permissions allow it)
+~~~
+
+## The two permissions that must agree
+
+Cross-account role assumption is easiest to understand as a handshake. Both sides must opt in.
+
+1. **The destination role's trust policy** says *who may assume this role*.
+2. **The source identity's permissions policy** says *which roles this identity may attempt to assume*.
+
+After the role is assumed, a third policy becomes relevant: the destination role's **permissions policy** determines what the temporary session may do.
+
+| Policy | Attached in | Answers |
+| --- | --- | --- |
+| Trust policy | Account B | Who may assume this role? |
+| Identity policy | Account A | May this caller invoke sts:AssumeRole on that role? |
+| Role permissions policy | Account B | What may the assumed-role session access? |
+
+## 1. Trust the source principal
+
+Account B creates ProductionReadRole with this trust policy. Trusting a specific role is safer than trusting every identity in the source account.
+
+~~~json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {
+      "AWS": "arn:aws:iam::111111111111:role/DeploymentRole"
+    },
+    "Action": "sts:AssumeRole"
+  }]
+}
+~~~
+
+A trust policy does not grant access to S3, DynamoDB, or any other service. It only defines who can obtain a session for the role.
+
+## 2. Allow the source to assume the role
+
+Account A attaches this policy to DeploymentRole:
+
+~~~json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": "sts:AssumeRole",
+    "Resource": "arn:aws:iam::222222222222:role/ProductionReadRole"
+  }]
+}
+~~~
+
+The exact role ARN keeps the permission narrowly scoped. A wildcard would allow attempts to assume unrelated roles.
+
+## 3. Grant the destination role only what it needs
+
+Account B gives ProductionReadRole permission to list one bucket and read its objects:
+
+~~~json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::production-reports"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::production-reports/*"
+    }
+  ]
+}
+~~~
+
+These permissions become the ceiling for the temporary role session. Permission boundaries, session policies, service control policies, resource policies, and explicit denies can reduce the effective permissions further.
+
+## Assuming the role with the AWS CLI
+
+The caller can request a session directly:
+
+~~~bash
+aws sts assume-role \
+  --role-arn arn:aws:iam::222222222222:role/ProductionReadRole \
+  --role-session-name deployment-read
+~~~
+
+STS returns a temporary access key, secret access key, session token, and expiration time. SDK credential providers and named AWS CLI profiles can perform this exchange automatically, so applications should not store the returned credentials in source code.
+
+~~~ini
+[profile production-read]
+role_arn = arn:aws:iam::222222222222:role/ProductionReadRole
+source_profile = application
+role_session_name = deployment-read
+~~~
+
+Then use the role session without manually exporting credentials:
+
+~~~bash
+aws s3 ls s3://production-reports --profile production-read
+~~~
+
+## Defining the destination role with AWS CDK
+
+This Python CDK code belongs in a stack deployed to Account B:
+
+~~~python
+from aws_cdk import Stack, aws_iam as iam, aws_s3 as s3
+from constructs import Construct
+
+
+class ProductionAccessStack(Stack):
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+
+        reports_bucket = s3.Bucket.from_bucket_name(
+            self, "ReportsBucket", "production-reports"
+        )
+
+        production_read_role = iam.Role(
+            self,
+            "ProductionReadRole",
+            role_name="ProductionReadRole",
+            assumed_by=iam.ArnPrincipal(
+                "arn:aws:iam::111111111111:role/DeploymentRole"
+            ),
+            description="Read production reports from the application account",
+        )
+
+        reports_bucket.grant_read(production_read_role)
+~~~
+
+Account A still needs a policy granting sts:AssumeRole on the new role. Keeping each account's policy in its own stack makes ownership and deployment order clearer.
+
+## Security guardrails
+
+* **Trust exact principals.** Avoid trusting an entire account unless that broader delegation is intentional and controlled.
+* **Use least privilege on both sides.** Scope sts:AssumeRole to an exact role ARN and scope destination permissions to required actions and resources.
+* **Use an external ID for third parties.** When a vendor assumes a role in your account, require a unique sts:ExternalId condition to reduce confused-deputy risk.
+* **Require MFA for sensitive human access.** A trust-policy condition can check aws:MultiFactorAuthPresent.
+* **Prefer short sessions.** Temporary credentials reduce exposure, but session duration should still match the task.
+* **Log and alert.** CloudTrail records AssumeRole and subsequent API activity under the role session. Use meaningful session names so activity is attributable.
+* **Do not pass role credentials between services.** Let each workload assume roles through its AWS SDK credential provider.
+
+## A useful debugging checklist
+
+When AssumeRole returns AccessDenied, verify the destination trust policy, the source identity policy, the exact partition/account/role ARN, and any explicit deny from an SCP or permissions boundary. If role assumption succeeds but the service call fails, inspect the role permissions, target resource policy, encryption-key policy, and organizational controls.
+
+The key mental model is simple: **Account B owns the role and decides who can assume it; Account A authorizes its identity to make the request; STS issues a temporary session whose actions are constrained by Account B's permissions.**
+`
+  },
+  {
     id: 'zero-cost-serverless-blog',
     siteName: 'System Architecture',
     siteUrl: '[https://thecuriousengineerblog.dev](https://thecuriousengineerblog.dev) › pages › zero-cost-serverless-blog',
@@ -209,6 +397,7 @@ By coupling S3 for asset storage and CloudFront as a CDN, CDK allows you to prov
     siteName: 'Cosine Similarity',
     siteUrl: '[https://thecuriousengineerblog.dev](https://thecuriousengineerblog.dev) › pages › cosine-similarity',
     title: 'Light Bulb Moment: Cosine Similarity for finding nearest neighbors in high-dimensional vector space',
+    snippet: 'Learn how cosine similarity helps retrieval-augmented generation find semantically related content in high-dimensional vector space.',
     tags: ['AI', 'Embedding', 'LLM'],
     date: '2026-08', // Fixed key spelling from data to date
     category: 'AI',

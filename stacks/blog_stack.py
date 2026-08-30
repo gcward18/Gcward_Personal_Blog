@@ -1,4 +1,7 @@
 import os
+import subprocess
+from pathlib import Path
+
 from dotenv import load_dotenv
 import aws_cdk as cdk
 from aws_cdk import (
@@ -58,15 +61,47 @@ class BlogStack(Stack):
             ),
             domain_names=[domain_name],
             certificate=certificate,
-            default_root_object="index.html"
+            default_root_object="index.html",
+            error_responses=[
+                cloudfront.ErrorResponse(
+                    http_status=403,
+                    response_http_status=200,
+                    response_page_path="/index.html",
+                    ttl=cdk.Duration.seconds(0),
+                ),
+                cloudfront.ErrorResponse(
+                    http_status=404,
+                    response_http_status=200,
+                    response_page_path="/index.html",
+                    ttl=cdk.Duration.seconds(0),
+                ),
+            ],
         )
 
-        # 5. Deploy website content
+        # 5. Build the Vite application before CDK stages the deployment asset.
+        # Using the checked-in lockfile makes the install reproducible, and
+        # avoids requiring Docker merely to synthesize or deploy this stack.
+        frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
+        try:
+            subprocess.run(["npm", "ci"], cwd=frontend_dir, check=True)
+            subprocess.run(["npm", "run", "build"], cwd=frontend_dir, check=True)
+        except FileNotFoundError as error:
+            raise RuntimeError(
+                "Node.js and npm must be installed before deploying BlogStack."
+            ) from error
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(
+                "The frontend production build failed; S3 deployment was stopped."
+            ) from error
+
+        frontend_bundle = s3deploy.Source.asset(str(frontend_dir / "dist"))
+
         s3deploy.BucketDeployment(
             self, "DeployWebsite",
-            sources=[s3deploy.Source.asset("./frontend/dist")],# Points to Vite dist folder
+            sources=[frontend_bundle],
             destination_bucket=site_bucket,
-            distribution=distribution
+            distribution=distribution,
+            distribution_paths=["/*"],
         )
 
         # Route 53 Records

@@ -29,16 +29,22 @@ export function ArticleReader() {
     return (
       <div>
         <h2>Article not found</h2>
-        <Link to="/">&lt; Return Home</Link>
+        <Link className="back-button" to="/">
+          <span aria-hidden="true">←</span>
+          Back to articles
+        </Link>
       </div>
     );
   }
 
   return (
     <article className="article-body">
-      <p style={{ marginBottom: '20px' }}>
-        <Link to="/">&lt; Return Home</Link>
-      </p>
+      <nav className="article-navigation" aria-label="Article navigation">
+        <Link className="back-button" to="/">
+          <span className="back-button-arrow" aria-hidden="true">←</span>
+          Back to articles
+        </Link>
+      </nav>
       <h1>{article.title}</h1>
       <p className="meta">
         [SYS_DATE: {article.date}] | [CAT: {article.category}]
