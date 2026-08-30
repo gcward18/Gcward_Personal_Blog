@@ -5,7 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import Prism from 'prismjs';
 
-import { ARTICLES } from '../data/articlesData.js';
+import { ARTICLES } from '../data/articleCatalog.js';
 import { MermaidDiagram } from './MermaidDiagram.jsx';
 
 import 'katex/dist/katex.min.css';

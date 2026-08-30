@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'; // Added useState!
 import { Routes, Route, Link, useParams } from 'react-router-dom';
 import {ArticleReader } from './components/ArticleReader.jsx'
-import {ARTICLES} from "./data/articlesData.js";
+import { ARTICLES } from './data/articleCatalog.js';
+import { AuthorStudio } from './components/AuthorStudio.jsx';
 
 function ThemeToggle() {
   const [theme, setTheme] = useState(() =>
@@ -37,6 +38,7 @@ function Header() {
           <span>The Curious Developer</span>
         </Link>
         <nav className="contact-bar" aria-label="External links">
+          <Link to="/author">Write</Link>
           <a href="https://github.com/gcward18" target="_blank" rel="noreferrer">GitHub</a>
           <a href="https://www.linkedin.com/in/georgecward/" target="_blank" rel="noreferrer">LinkedIn</a>
           <a href="mailto:gcward18@gmail.com">Say hello</a>
@@ -157,6 +159,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/pages/:articleId" element={<ArticleReader />} />
+        <Route path="/author" element={<AuthorStudio />} />
       </Routes>
     </div>
   );
