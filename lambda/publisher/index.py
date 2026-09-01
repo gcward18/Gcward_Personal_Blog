@@ -47,6 +47,23 @@ def github_request(method, path, token, payload=None):
         raise RuntimeError(f"GitHub API returned {error.code}: {detail}") from error
 
 
+def read_github_token():
+    secret_string = secrets.get_secret_value(
+        SecretId=os.environ["GITHUB_TOKEN_SECRET"]
+    )["SecretString"].strip()
+
+    # Support both the preferred plaintext value and Secrets Manager's
+    # key/value editor using a key named "token".
+    try:
+        structured_secret = json.loads(secret_string)
+    except json.JSONDecodeError:
+        return secret_string
+
+    if isinstance(structured_secret, dict):
+        return str(structured_secret.get("token", "")).strip()
+    return secret_string
+
+
 def handler(event, _context):
     headers = event.get("headers") or {}
     origin = headers.get("origin") or headers.get("Origin")
@@ -78,9 +95,9 @@ def handler(event, _context):
     document_path = f"frontend/src/content/{slug}.json"
 
     try:
-        token = secrets.get_secret_value(
-            SecretId=os.environ["GITHUB_TOKEN_SECRET"]
-        )["SecretString"]
+        token = read_github_token()
+        if not token:
+            raise RuntimeError("The GitHub token secret is empty or missing the 'token' field.")
         base_ref = github_request("GET", f"{repo_path}/git/ref/heads/{base_branch}", token)
         branch = f"article/{slug}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
         github_request(

@@ -16,6 +16,7 @@ from aws_cdk import (
     aws_cognito as cognito,
     aws_apigateway as apigateway,
     aws_lambda as _lambda,
+    aws_iam as iam,
     aws_secretsmanager as secretsmanager,
     custom_resources as cr,
     aws_route53 as route53,
@@ -137,6 +138,44 @@ class BlogStack(Stack):
             },
         )
         github_token.grant_read(publisher)
+        publisher.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["kms:Decrypt"],
+                resources=["*"],
+                conditions={
+                    "StringEquals": {
+                        "kms:ViaService": f"secretsmanager.{self.region}.amazonaws.com"
+                    },
+                    "StringLike": {
+                        "kms:EncryptionContext:SecretARN": f"{github_token.secret_arn}*"
+                    },
+                },
+            )
+        )
+
+        writing_assistant = _lambda.Function(
+            self,
+            "PremiumWritingAssistant",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            code=_lambda.Code.from_asset("lambda/assistant"),
+            handler="index.handler",
+            timeout=cdk.Duration.seconds(60),
+            memory_size=512,
+            environment={
+                "ALLOWED_ORIGINS": f"https://{domain_name},http://localhost:5173",
+                "BEDROCK_MODEL_ID": os.getenv(
+                    "BEDROCK_MODEL_ID",
+                    "amazon.nova-lite-v1:0",
+                ),
+                "PREMIUM_GROUPS": os.getenv("PREMIUM_GROUPS", "Authors"),
+            },
+        )
+        writing_assistant.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"],
+                resources=["*"],
+            )
+        )
 
         publishing_api = apigateway.RestApi(
             self,
@@ -171,6 +210,12 @@ class BlogStack(Stack):
         publishing_api.root.add_resource("articles").add_method(
             "POST",
             apigateway.LambdaIntegration(publisher),
+            authorizer=authorizer,
+            authorization_type=apigateway.AuthorizationType.COGNITO,
+        )
+        publishing_api.root.add_resource("assistant").add_method(
+            "POST",
+            apigateway.LambdaIntegration(writing_assistant),
             authorizer=authorizer,
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
@@ -233,6 +278,7 @@ class BlogStack(Stack):
                 "clientId": author_client.user_pool_client_id,
                 "authorizeUrl": f"{author_domain.base_url()}/oauth2/authorize",
                 "publishApiUrl": f"{publishing_api.url}articles",
+                "assistantApiUrl": f"{publishing_api.url}assistant",
             }
         )
         config_writer = cr.AwsCustomResource(
