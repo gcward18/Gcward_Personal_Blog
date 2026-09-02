@@ -18,7 +18,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::211663170976:role/YOUR_ACTUAL_ROLE_NAME
+          role-to-assume: arn:aws:iam::211663170976:role/github-deployment-role
           aws-region: us-east-1
           audience: ://amazonaws.com # Keep this synchronized with your IAM condition key
           
