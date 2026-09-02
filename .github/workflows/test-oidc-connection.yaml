@@ -1,7 +1,7 @@
 name: Test AWS OIDC Connection
 
 on:
-  workflow_dispatch: # Allows you to trigger this manually from the GitHub UI
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -10,13 +10,17 @@ permissions:
 jobs:
   test-auth:
     runs-on: ubuntu-latest
-    environment: production # Match your environment if using one
+    # Removed the 'environment: production' block temporarily to avoid metadata injection
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::211663170976:role/YOUR_ROLE_NAME
+          role-to-assume: arn:aws:iam::211663170976:role/YOUR_ACTUAL_ROLE_NAME
           aws-region: us-east-1
-
+          audience: ://amazonaws.com # Keep this synchronized with your IAM condition key
+          
       - name: Verify Identity
         run: aws sts get-caller-identity
