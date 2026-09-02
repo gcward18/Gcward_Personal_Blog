@@ -10,7 +10,6 @@ permissions:
 jobs:
   test-auth:
     runs-on: ubuntu-latest
-    # Removed the 'environment: production' block temporarily to avoid metadata injection
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -20,7 +19,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::211663170976:role/github-deployment-role
           aws-region: us-east-1
-          audience: ://amazonaws.com # Keep this synchronized with your IAM condition key
-          
+          audience: sts.amazonaws.com 
+
       - name: Verify Identity
         run: aws sts get-caller-identity
