@@ -14,12 +14,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::211663170976:role/github-deployment-role
           aws-region: us-east-1
-          audience: sts.amazonaws.com 
 
       - name: Verify Identity
         run: aws sts get-caller-identity
