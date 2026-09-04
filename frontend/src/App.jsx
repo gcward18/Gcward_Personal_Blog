@@ -33,9 +33,9 @@ function Header() {
   return (
     <header className="profile-header-container">
       <div className="brand-bar">
-        <Link className="brand" to="/" aria-label="The Curious Developer home">
+        <Link className="brand" to="/" aria-label="The Curious Engineer home">
           <span className="brand-mark" aria-hidden="true">?</span>
-          <span>The Curious Developer</span>
+          <span>The Curious Engineer</span>
         </Link>
         <nav className="contact-bar" aria-label="External links">
           <Link to="/author">Write</Link>

@@ -192,13 +192,28 @@ The key mental model is simple: **Account B owns the role and decides who can as
     id: 'zero-cost-serverless-blog',
     siteName: 'System Architecture',
     siteUrl: '[https://thecuriousengineerblog.dev](https://thecuriousengineerblog.dev) › pages › zero-cost-serverless-blog',
-    title: 'Building a Zero-Cost Serverless Blog with AWS CDK, S3, and Python',
+    title: 'Building a Near-Zero-Cost Serverless Blog with AWS CDK, S3, and Python',
     snippet: "Deploying a technical blog or portfolio shouldn't mean managing virtual servers or paying monthly hosting subscriptions...",
     tags: ['AWS CDK', 'Python', 'Serverless'],
     date: '2026-08',
     category: 'ARCHITECTURE_LESSONS',
     content: `
-Deploying a personal blog or technical portfolio shouldn't mean managing virtual servers or paying monthly hosting subscriptions. By combining **AWS CDK (Python)**, **Amazon S3**, and **Amazon CloudFront**, you can build a serverless static blog that costs fractions of a cent to host and offers near-infinite scalability.
+Deploying a personal blog or technical portfolio shouldn't mean managing virtual servers or paying a fixed monthly hosting subscription. By combining **AWS CDK (Python)**, **Amazon S3**, and **Amazon CloudFront**, you can build a serverless static blog that can cost $0 for light usage that stays within AWS's applicable free allowances.
+
+The important word is **can**. AWS services are usage-based, free offers and limits can change, and a custom domain is not free. This guide shows the lowest-cost hosting path first and explains the optional paid pieces separately.
+
+## The Free-Tier Path
+
+To give this architecture the best chance of costing $0:
+
+1. Store only the compiled static site in a private S3 bucket.
+2. Serve it through CloudFront and use the generated \`https://<distribution>.cloudfront.net\` URL.
+3. Do not add Route 53 or buy a domain unless you want a custom address.
+4. Avoid optional services such as Lambda@Edge, real-time logs, and frequent paid invalidations.
+5. Create a small AWS Budget and enable Free Tier usage alerts before publishing.
+6. Monitor usage and current pricing; free allowances are not hard spending limits.
+
+CloudFront currently documents a recurring free allowance for data transfer and HTTP/HTTPS requests. Check the official [CloudFront pricing](https://aws.amazon.com/cloudfront/pricing/) and [Amazon S3 pricing](https://aws.amazon.com/s3/pricing/) pages before deploying because eligibility, plans, and limits may change.
 
 ## 1. The Architecture Overview
 
@@ -326,7 +341,9 @@ if __name__ == "__main__":
 
 ## 4. Cost Control & Safeguards
 
-While S3 storage and CloudFront bandwidth fall within the **AWS Free Tier** for most small blogs (up to 1 TB of monthly outbound transfer), setting up an **AWS Budget Alert** prevents unexpected charges:
+S3 storage and CloudFront delivery can remain inside AWS's free allowances for a small blog, but neither service is an unlimited free host. A budget notification helps you spot charges early; it does **not** stop resources or impose a hard spending cap.
+
+The following CDK construct creates a $1 monthly alert. Use an email address you monitor and confirm the subscription message from AWS:
 
 \`\`\`python
 from aws_cdk import aws_budgets as budgets
@@ -353,7 +370,21 @@ budgets.CfnBudget(
 )
 \`\`\`
 
-## 5. Deployment Workflow
+You can also enable AWS Free Tier usage alerts in the Billing console. If you need a strict no-charge experiment and your account is eligible, review AWS's current Free Plan terms before creating resources.
+
+## 5. Optional Custom Domain Costs
+
+CloudFront supplies an HTTPS URL at no additional domain-registration cost. That is the free path used by the example stack above.
+
+This live blog uses \`thecuriousengineerblog.dev\` instead. A custom domain normally adds:
+
+* An annual domain-registration or renewal fee.
+* Route 53 public hosted-zone charges and possibly DNS query charges.
+* An ACM public certificate for CloudFront, which AWS provides without an additional certificate charge, although the surrounding AWS resources can still incur charges.
+
+See the current [Route 53 pricing](https://aws.amazon.com/route53/pricing/) before choosing the custom-domain option.
+
+## 6. Deployment Workflow
 
 * Write your blog post in Markdown (\`./posts/my-first-post.md\`).
 * Run \`python build_site.py\` to compile Markdown files to \`./website/\`.
