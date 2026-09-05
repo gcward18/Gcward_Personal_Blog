@@ -17,6 +17,7 @@ from aws_cdk import (
     aws_apigateway as apigateway,
     aws_lambda as _lambda,
     aws_iam as iam,
+    aws_dynamodb as dynamodb,
     aws_secretsmanager as secretsmanager,
     custom_resources as cr,
     aws_route53 as route53,
@@ -167,7 +168,12 @@ class BlogStack(Stack):
                     "BEDROCK_MODEL_ID",
                     "amazon.nova-lite-v1:0",
                 ),
+                "BEDROCK_IMAGE_MODEL_ID": os.getenv(
+                    "BEDROCK_IMAGE_MODEL_ID",
+                    "amazon.nova-canvas-v1:0",
+                ),
                 "PREMIUM_GROUPS": os.getenv("PREMIUM_GROUPS", "Authors"),
+                "SITE_URL": f"https://{domain_name}",
             },
         )
         writing_assistant.add_to_role_policy(
@@ -176,6 +182,43 @@ class BlogStack(Stack):
                 resources=["*"],
             )
         )
+
+        linkedin_secret = secretsmanager.Secret.from_secret_name_v2(
+            self,
+            "LinkedInClientSecret",
+            os.getenv("LINKEDIN_CLIENT_SECRET_NAME", "curious-developer/linkedin-client-secret"),
+        )
+        linkedin_connections = dynamodb.Table(
+            self,
+            "LinkedInConnections",
+            partition_key=dynamodb.Attribute(name="pk", type=dynamodb.AttributeType.STRING),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            encryption=dynamodb.TableEncryption.AWS_MANAGED,
+            time_to_live_attribute="ttl",
+            removal_policy=RemovalPolicy.RETAIN,
+        )
+        linkedin_publisher = _lambda.Function(
+            self,
+            "LinkedInPublisher",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            code=_lambda.Code.from_asset("lambda/linkedin"),
+            handler="index.handler",
+            timeout=cdk.Duration.seconds(60),
+            memory_size=512,
+            environment={
+                "ALLOWED_ORIGINS": f"https://{domain_name},http://localhost:5173",
+                "LINKEDIN_CLIENT_ID": os.getenv("LINKEDIN_CLIENT_ID", "configure-linkedin-client-id"),
+                "LINKEDIN_CLIENT_SECRET": linkedin_secret.secret_name,
+                "LINKEDIN_REDIRECT_URI": f"https://{domain_name}/author",
+                "LINKEDIN_TABLE": linkedin_connections.table_name,
+                "LINKEDIN_VERSION": os.getenv("LINKEDIN_VERSION", "202608"),
+                "LINKEDIN_ORGANIZATION_ID": os.getenv("LINKEDIN_ORGANIZATION_ID", ""),
+                "LINKEDIN_ORGANIZATION_NAME": os.getenv("LINKEDIN_ORGANIZATION_NAME", "LinkedIn company page"),
+                "PREMIUM_GROUPS": os.getenv("PREMIUM_GROUPS", "Authors"),
+            },
+        )
+        linkedin_connections.grant_read_write_data(linkedin_publisher)
+        linkedin_secret.grant_read(linkedin_publisher)
 
         publishing_api = apigateway.RestApi(
             self,
@@ -219,12 +262,39 @@ class BlogStack(Stack):
             authorizer=authorizer,
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
+        publishing_api.root.add_resource("linkedin").add_method(
+            "POST",
+            apigateway.LambdaIntegration(linkedin_publisher),
+            authorizer=authorizer,
+            authorization_type=apigateway.AuthorizationType.COGNITO,
+        )
 
         # 4. CloudFront CDN Distribution
+        article_page_rewrite = cloudfront.Function(
+            self,
+            "ArticlePageRewrite",
+            runtime=cloudfront.FunctionRuntime.JS_2_0,
+            code=cloudfront.FunctionCode.from_inline(
+                """function handler(event) {
+  var request = event.request;
+  if (/^\\/pages\\/[a-z0-9-]+\\/?$/.test(request.uri)) {
+    request.uri = request.uri.replace(/\\/?$/, '/index.html');
+  }
+  return request;
+}"""
+            ),
+        )
+
         distribution = cloudfront.Distribution(
             self, "SiteDistribution",
             default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.S3BucketOrigin.with_origin_access_control(site_bucket)
+                origin=origins.S3BucketOrigin.with_origin_access_control(site_bucket),
+                function_associations=[
+                    cloudfront.FunctionAssociation(
+                        function=article_page_rewrite,
+                        event_type=cloudfront.FunctionEventType.VIEWER_REQUEST,
+                    )
+                ],
             ),
             domain_names=[domain_name],
             certificate=certificate,
@@ -279,6 +349,7 @@ class BlogStack(Stack):
                 "authorizeUrl": f"{author_domain.base_url()}/oauth2/authorize",
                 "publishApiUrl": f"{publishing_api.url}articles",
                 "assistantApiUrl": f"{publishing_api.url}assistant",
+                "linkedinApiUrl": f"{publishing_api.url}linkedin",
             }
         )
         config_writer = cr.AwsCustomResource(

@@ -18,6 +18,7 @@ const localConfig = {
   authorizeUrl: import.meta.env.VITE_COGNITO_AUTHORIZE_URL,
   publishApiUrl: import.meta.env.VITE_PUBLISH_API_URL,
   assistantApiUrl: import.meta.env.VITE_ASSISTANT_API_URL,
+  linkedinApiUrl: import.meta.env.VITE_LINKEDIN_API_URL,
 };
 
 const hasCompleteConfig = (config) =>
@@ -251,7 +252,14 @@ export function AuthorStudio() {
 
           <ArticleAssistant
             article={draft.content}
+            articleMeta={{
+              title: draft.title,
+              slug: draft.slug,
+              snippet: draft.snippet,
+              tags: draft.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+            }}
             endpoint={config?.assistantApiUrl}
+            linkedinEndpoint={config?.linkedinApiUrl}
             token={token}
             onAccept={(content) => {
               setDraft((current) => ({ ...current, content }));

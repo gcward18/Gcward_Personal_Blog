@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="627" viewBox="0 0 1200 627">
+  <rect width="1200" height="627" fill="#17151c"/>
+  <circle cx="1028" cy="-12" r="360" fill="#481cab" opacity=".72"/>
+  <circle cx="1120" cy="590" r="260" fill="#48cab1" opacity=".7"/>
+  <rect x="92" y="92" width="76" height="76" rx="20" fill="#481cab"/>
+  <text x="130" y="149" fill="#fff" font-family="Arial, sans-serif" font-size="52" text-anchor="middle">?</text>
+  <text x="92" y="276" fill="#fff" font-family="Arial, sans-serif" font-size="72" font-weight="700">The Curious Engineer</text>
+  <text x="92" y="350" fill="#d7d0e3" font-family="Arial, sans-serif" font-size="34">Stay curious. Build with intention.</text>
+  <text x="92" y="520" fill="#63d9c2" font-family="Courier New, monospace" font-size="25">CLOUD · AI SYSTEMS · DEVELOPER CRAFT</text>
+</svg>

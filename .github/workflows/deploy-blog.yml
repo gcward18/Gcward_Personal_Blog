@@ -7,6 +7,8 @@ on:
       - "frontend/**"
       - "stacks/blog_stack.py"
       - "lambda/publisher/**"
+      - "lambda/assistant/**"
+      - "lambda/linkedin/**"
       - "app.py"
       - "requirements.txt"
       - ".github/workflows/deploy-blog.yml"
@@ -57,4 +59,8 @@ jobs:
           GITHUB_REPOSITORY: Gcward_Personal_Blog
           GITHUB_TOKEN_SECRET_NAME: curious-developer/github-token
           COGNITO_DOMAIN_PREFIX: ${{ secrets.COGNITO_DOMAIN_PREFIX }}
+          LINKEDIN_CLIENT_ID: ${{ vars.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_ORGANIZATION_ID: ${{ vars.LINKEDIN_ORGANIZATION_ID }}
+          LINKEDIN_ORGANIZATION_NAME: ${{ vars.LINKEDIN_ORGANIZATION_NAME }}
+          LINKEDIN_CLIENT_SECRET_NAME: curious-developer/linkedin-client-secret
         run: cdk deploy BlogStack --require-approval never

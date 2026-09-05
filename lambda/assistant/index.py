@@ -1,11 +1,16 @@
 import json
 import os
+import random
+import re
 
 import boto3
 
 
 bedrock = boto3.client("bedrock-runtime")
 MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0")
+IMAGE_MODEL_ID = os.environ.get("BEDROCK_IMAGE_MODEL_ID", "amazon.nova-canvas-v1:0")
+SITE_URL = os.environ.get("SITE_URL", "https://thecuriousengineerblog.dev").rstrip("/")
+SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def response(status_code, body, origin):
@@ -49,10 +54,16 @@ def handler(event, _context):
     instruction = str(body.get("instruction", "")).strip()
     article = str(body.get("article", ""))
     history = body.get("messages", [])
+    mode = body.get("mode", "article")
+    article_meta = body.get("articleMeta") or {}
+    if not isinstance(article_meta, dict):
+        article_meta = {}
     if not instruction:
         return response(400, {"error": "An instruction or question is required."}, origin)
     if len(instruction) > 4_000 or len(article) > 100_000:
         return response(400, {"error": "The assistant request exceeds an allowed limit."}, origin)
+    if mode not in ("article", "linkedin", "linkedin_image"):
+        return response(400, {"error": "Unsupported assistant mode."}, origin)
 
     recent_history = []
     for item in history[-8:]:
@@ -64,7 +75,84 @@ def handler(event, _context):
             else:
                 recent_history.append({"role": role, "content": [{"text": content}]})
 
-    prompt = f"""Current article Markdown:
+    if mode in ("linkedin", "linkedin_image"):
+        slug = str(article_meta.get("slug", "")).strip().lower()
+        if not SLUG_PATTERN.fullmatch(slug):
+            return response(400, {"error": "Add a valid article slug before generating a LinkedIn post."}, origin)
+        title = str(article_meta.get("title", "")).strip()[:140]
+        snippet = str(article_meta.get("snippet", "")).strip()[:400]
+        raw_tags = article_meta.get("tags", [])
+        if not isinstance(raw_tags, list):
+            raw_tags = []
+        tags = [str(tag).strip()[:50] for tag in raw_tags[:10]]
+        article_url = f"{SITE_URL}/pages/{slug}/"
+        if mode == "linkedin_image":
+            image_prompt = (
+                "Editorial image for a LinkedIn article post. "
+                f"Article title: {title}. Article summary: {snippet}. "
+                f"Creative direction: {instruction}. "
+                "Professional, visually clear, strong central concept, landscape composition."
+            )[:1024]
+            try:
+                image_response = bedrock.invoke_model(
+                    modelId=IMAGE_MODEL_ID,
+                    contentType="application/json",
+                    accept="application/json",
+                    body=json.dumps({
+                        "taskType": "TEXT_IMAGE",
+                        "textToImageParams": {
+                            "text": image_prompt,
+                            "negativeText": "words, letters, logos, watermarks, signatures, distorted objects, low resolution",
+                            "style": "FLAT_VECTOR_ILLUSTRATION",
+                        },
+                        "imageGenerationConfig": {
+                            "numberOfImages": 1,
+                            "quality": "standard",
+                            "width": 1200,
+                            "height": 624,
+                            "cfgScale": 7.0,
+                            "seed": random.randint(0, 858_993_459),
+                        },
+                    }),
+                )
+                image_result = json.loads(image_response["body"].read())
+                images = image_result.get("images", [])
+                if not images:
+                    raise ValueError("Nova Canvas returned no image.")
+                return response(200, {
+                    "status": "success",
+                    "feedback": "A LinkedIn image draft is ready for review.",
+                    "imageBase64": images[0],
+                    "contentType": "image/png",
+                    "filename": f"{slug}-linkedin.png",
+                    "changed": False,
+                }, origin)
+            except Exception as error:
+                print(f"Bedrock image generation error: {type(error).__name__}")
+                return response(502, {
+                    "error": "The image generator could not complete this request. Try again shortly."
+                }, origin)
+
+        prompt = f"""Create a LinkedIn post for this article.
+
+Title: {title}
+Summary: {snippet}
+Tags: {', '.join(tags)}
+Article URL: {article_url}
+Article Markdown:
+<article>
+{article}
+</article>
+
+Author request:
+{instruction}
+
+Return only a JSON object with this exact shape:
+{{"feedback":"one concise sentence about the draft","socialPost":"complete LinkedIn post"}}
+
+The post must be no more than 2,800 characters, use the exact Article URL once, accurately reflect the article, contain no unsupported claims, and include no more than five relevant hashtags. Do not wrap the post in quotation marks or a Markdown code fence."""
+    else:
+        prompt = f"""Current article Markdown:
 <article>
 {article}
 </article>
@@ -101,6 +189,19 @@ If the author only asks a question or requests feedback without asking for edits
             if "text" in block
         )
         assistant_result = extract_json(output_text)
+        if mode == "linkedin":
+            social_post = str(assistant_result.get("socialPost", "")).strip()
+            if not social_post or len(social_post) > 3_000:
+                raise ValueError("The generated LinkedIn post was empty or too long.")
+            if social_post.count(article_url) != 1:
+                raise ValueError("The generated LinkedIn post did not contain the required article URL exactly once.")
+            return response(200, {
+                "status": "success",
+                "feedback": str(assistant_result.get("feedback", "LinkedIn draft ready.")),
+                "socialPost": social_post,
+                "changed": False,
+            }, origin)
+
         markdown = str(assistant_result.get("markdown", article))
         feedback = str(assistant_result.get("feedback", "Revision ready."))
         changed = bool(assistant_result.get("changed")) and markdown != article

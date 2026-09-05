@@ -46,6 +46,34 @@ The author studio can discuss an article with Amazon Bedrock, request a complete
 
 The assistant API is protected by the Cognito authorizer and repeats the premium-group check inside Lambda before calling Bedrock. Ensure Amazon Bedrock model access is enabled in the deployment region.
 
+## LinkedIn and social previews
+
+The frontend build generates a static HTML entry point for every article under `dist/pages/<slug>/index.html`. Each page contains article-specific canonical, description, Open Graph, and large-card metadata. A CloudFront viewer-request function maps both `/pages/<slug>` and `/pages/<slug>/` to that generated entry point, allowing LinkedIn and other crawlers to read metadata without executing React.
+
+Set `SITE_URL` during builds if deploying under a different public origin. The default is `https://thecuriousengineerblog.dev`. Replace `frontend/public/social-card.png` to customize the shared preview artwork while retaining its 1200 × 627 dimensions.
+
+The premium assistant also provides a **Generate LinkedIn post** action. It uses the article title, summary, tags, Markdown, and canonical production URL to prepare an editable post of at most 3,000 characters. The author must review the draft and explicitly confirm before the backend publishes it.
+
+The LinkedIn draft can include one optional PNG or JPEG image up to 6 MB, or use Amazon Nova Canvas to create a landscape editorial image from the article and the author's creative direction. Publishing uploads the image through LinkedIn's Images API and attaches its image URN to the post.
+
+This integration publishes to a company Page, not the connected member's personal profile. Create a LinkedIn developer application with **Sign In with LinkedIn using OpenID Connect** and approved **Community Management API** access. The OAuth grant requests `w_organization_social`; the member connecting the app must be an `ADMINISTRATOR`, `DIRECT_SPONSORED_CONTENT_POSTER`, or `CONTENT_ADMIN` for the configured Page. An app that only exposes `w_member_social` cannot publish company-page posts.
+
+Add this exact authorized redirect URL:
+
+```text
+https://thecuriousengineerblog.dev/author
+```
+
+Set these repository Actions variables:
+
+| Variable | Value |
+| --- | --- |
+| `LINKEDIN_CLIENT_ID` | The developer application's client ID |
+| `LINKEDIN_ORGANIZATION_ID` | The numeric ID from the company Page URL or LinkedIn organization lookup |
+| `LINKEDIN_ORGANIZATION_NAME` | A display label used in the publishing confirmation |
+
+Store only the client secret in AWS Secrets Manager as `curious-developer/linkedin-client-secret` (either plaintext or JSON with a `client_secret` key). The stack stores member access tokens in an encrypted DynamoDB table with TTL expiration; tokens and the client secret are never returned to the frontend or written to logs.
+
 ## Required setup
 
 Store a fine-grained GitHub token in AWS Secrets Manager under `curious-developer/github-token`. "Plaintext" here means the secret value format; Secrets Manager still encrypts the secret at rest. The key/value editor is also supported when the key is exactly `token`. Limit the token to this repository with **Contents: read/write** and **Pull requests: read/write** permissions, set a short expiration, and rotate it. Never put the token in a command argument, documentation, source code, Lambda environment variable, or log output.

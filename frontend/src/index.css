@@ -743,6 +743,35 @@ input {
   font-size: 0.66rem;
 }
 
+.assistant-quick-actions {
+  display: flex;
+  gap: 8px;
+  margin: -4px 0 16px;
+  flex-wrap: wrap;
+}
+
+.assistant-quick-actions button {
+  padding: 7px 10px;
+  color: var(--accent);
+  background: var(--surface-raised);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 7px;
+  font-family: var(--font-code);
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.assistant-quick-actions button:hover,
+.assistant-quick-actions button:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.assistant-quick-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .assistant-conversation {
   display: grid;
   gap: 10px;
@@ -789,6 +818,171 @@ input {
   background: var(--page);
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+.social-post-draft {
+  margin: 16px 0;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.social-post-draft label {
+  margin: 0;
+  padding: 12px;
+}
+
+.social-post-draft textarea {
+  min-height: 210px;
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+.character-count {
+  margin: -5px 12px 10px;
+  color: var(--muted);
+  font-family: var(--font-code);
+  font-size: 0.65rem;
+  text-align: right;
+}
+
+.character-count.over-limit {
+  color: #a52222;
+  font-weight: 700;
+}
+
+.post-attachment-editor {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.post-attachment-editor .proposal-heading h4 span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.attachment-preview {
+  margin: 12px;
+  overflow: hidden;
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.attachment-preview img {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+}
+
+.attachment-preview figcaption,
+.attachment-note,
+.attachment-empty {
+  color: var(--muted);
+  font-family: var(--font-code);
+  font-size: 0.65rem;
+}
+
+.attachment-preview figcaption {
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+}
+
+.attachment-empty,
+.attachment-note {
+  margin: 10px 12px;
+}
+
+.image-prompt-label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink);
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.image-prompt-label textarea {
+  min-height: 76px;
+  resize: vertical;
+}
+
+.attachment-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  flex-wrap: wrap;
+}
+
+.attachment-actions button,
+.attachment-actions a,
+.upload-button {
+  padding: 7px 10px;
+  color: var(--accent);
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font-family: var(--font-code);
+  font-size: 0.68rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.attachment-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.upload-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.attachment-alt-label {
+  display: grid;
+  gap: 6px;
+  margin: 12px;
+  color: var(--ink);
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.linkedin-publish-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.linkedin-publish-controls > span,
+.linkedin-publish-message {
+  color: var(--muted);
+  font-family: var(--font-code);
+  font-size: 0.68rem;
+}
+
+.linkedin-publish-controls > button:not(.primary-button) {
+  padding: 8px 11px;
+  color: var(--accent);
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.linkedin-publish-message {
+  margin: 0;
+  padding: 0 12px 12px;
+  color: #24713d;
 }
 
 .proposal-heading {
