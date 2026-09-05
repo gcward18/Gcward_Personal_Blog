@@ -1,0 +1,12 @@
+{
+  "id": "ai-coding-assistants",
+  "title": "AI Coding Assistants",
+  "snippet": "The wonders of coding assistants",
+  "tags": [
+    "AI",
+    "Development"
+  ],
+  "date": "2026-09",
+  "category": "COMMUNITY",
+  "content": "##### From Cave Drawings to Code Prompts: The Evolution of Coding\n\nBack in the day, our ancestors chiseled their thoughts into stone. Fast forward to 2026, and we're coding at the speed of a prompt.\n\nIn the olden days, we had to painstakingly write tiny excerpts of our knowledge, spending hours to get a cohesive idea onto paper or a textbox. Learning the syntax to turn those thoughts into actionable items for a computer was a monumental task.\n\nNow, with tools like Codex, Kiro, and Cursor, we can code at the speed of a prompt. But there are issues when we abstract our thoughts away from the low-level details. Things become a bit more bloated, but we're able to do more with less thought effort.\n\nI'm not too sure how to feel about this current state of affairs. I personally like hoarding the ability to develop, but I understand how difficult it is, and it's a tough skill to acquire.\n\nI think we need to wait and see what happens, but generally, these tools have improved my productivity. I'm able to build a lot more for a lot less effort and time. For that, I am grateful. This entire app and having AI integration took me less than a week. It has a deployment pipeline and is all managed in CDK. It's a pretty robust project for a 1-week effort in the evenings after work, class, and family time.\n\nFeels pretty good to live in 2026 and see my job be turned over to a predictive text generator."
+}
