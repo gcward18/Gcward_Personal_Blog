@@ -13,6 +13,14 @@ aws_account = os.getenv("AWS_ACCOUNT_ID", os.getenv("CDK_DEFAULT_ACCOUNT"))
 aws_region = os.getenv("AWS_REGION", os.getenv("CDK_DEFAULT_REGION", "us-east-1"))
 email_address = os.getenv("EMAIL", os.getenv("CDK_DEFAULT_EMAIL"))
 
+if not aws_account:
+    raise ValueError("AWS_ACCOUNT_ID environment variable must be set.")
+
+if not email_address:
+    raise ValueError(
+        "EMAIL environment variable must be set for AWS Budget notifications."
+    )
+
 # Shared environment configuration
 env_us_east_1 = cdk.Environment(
     account=aws_account,  # Your AWS Account ID
