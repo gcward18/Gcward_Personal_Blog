@@ -2,7 +2,8 @@ name: Deploy Curious Developer Blog
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - "frontend/**"
       - "stacks/blog_stack.py"
@@ -12,6 +13,7 @@ on:
       - "app.py"
       - "requirements.txt"
       - ".github/workflows/deploy-blog.yml"
+
   workflow_dispatch:
 
 permissions:
@@ -24,30 +26,74 @@ concurrency:
 
 jobs:
   deploy:
+    name: Deploy production
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    environment: production
+    timeout-minutes: 30
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
 
       - name: Install deployment dependencies
         run: |
+          set -Eeuo pipefail
           python -m pip install -r requirements.txt
           npm install --global aws-cdk
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Validate AWS configuration
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          set -Eeuo pipefail
+
+          if [[ ! "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]; then
+            echo "::error::AWS_ACCOUNT_ID must be a 12-digit account ID."
+            exit 1
+          fi
+
+          expected_role="arn:aws:iam::${AWS_ACCOUNT_ID}:role/github-deployment-role"
+
+          if [[ "$AWS_DEPLOY_ROLE_ARN" != "$expected_role" ]]; then
+            echo "::error::AWS_DEPLOY_ROLE_ARN does not match github-deployment-role."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
+          allowed-account-ids: ${{ secrets.AWS_ACCOUNT_ID }}
+          role-session-name: github-deploy-${{ github.run_id }}
+          retry-max-attempts: 2
+          mask-aws-account-id: true
+
+      - name: Verify AWS identity
+        run: |
+          set -Eeuo pipefail
+          identity_arn="$(aws sts get-caller-identity --query Arn --output text)"
+          echo "Successfully authenticated to AWS."
+          echo "Identity: ${identity_arn}"
+
+          if [[ "$identity_arn" != arn:aws:sts::*:assumed-role/github-deployment-role/* ]]; then
+            echo "::error::Unexpected AWS identity."
+            exit 1
+          fi
 
       - name: Build and deploy approved content
         env:
@@ -63,4 +109,16 @@ jobs:
           LINKEDIN_ORGANIZATION_ID: ${{ vars.LINKEDIN_ORGANIZATION_ID }}
           LINKEDIN_ORGANIZATION_NAME: ${{ vars.LINKEDIN_ORGANIZATION_NAME }}
           LINKEDIN_CLIENT_SECRET_NAME: curious-developer/linkedin-client-secret
-        run: cdk deploy BlogStack --require-approval never
+        run: |
+          set -Eeuo pipefail
+          cdk deploy BlogStack --require-approval never
+
+      - name: Report deployment failure
+        if: failure()
+        run: |
+          echo "::error::Deployment failed."
+          echo "If authentication failed, verify:"
+          echo "1. This job uses environment: production."
+          echo "2. The AWS trust policy contains the exact immutable OIDC subject."
+          echo "3. AWS_DEPLOY_ROLE_ARN references github-deployment-role."
+          echo "4. The GitHub production environment allows the main branch."
