@@ -9,31 +9,75 @@ permissions:
 
 jobs:
   test-auth:
+    name: Test AWS authentication
     runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Validate AWS deployment configuration
+
+      - name: Validate configuration
+        shell: bash
         env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
+          set -Eeuo pipefail
+
           if [[ ! "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]; then
-            echo "::error::AWS_ACCOUNT_ID must be a 12-digit account ID and must be available to this job."
-            exit 1
-          fi
-          expected_role_prefix="arn:aws:iam::${AWS_ACCOUNT_ID}:role/"
-          if [[ "$AWS_DEPLOY_ROLE_ARN" != "$expected_role_prefix"* ]]; then
-            echo "::error::AWS_DEPLOY_ROLE_ARN is missing, malformed, or belongs to a different AWS account."
+            echo "::error::AWS_ACCOUNT_ID is missing or is not a 12-digit AWS account ID."
             exit 1
           fi
 
-      - name: Configure AWS Credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+          expected_role_arn="arn:aws:iam::${AWS_ACCOUNT_ID}:role/github-deployment-role"
+
+          if [[ "$AWS_DEPLOY_ROLE_ARN" != "$expected_role_arn" ]]; then
+            echo "::error::AWS_DEPLOY_ROLE_ARN is missing or does not match the expected deployment role."
+            echo "Expected role name: github-deployment-role"
+            exit 1
+          fi
+
+          echo "AWS deployment configuration is present."
+
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
-          role-to-assume: arn:aws:iam::211663170976:role/github-deployment-role
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
+          allowed-account-ids: ${{ secrets.AWS_ACCOUNT_ID }}
+          role-session-name: github-oidc-test-${{ github.run_id }}
+          retry-max-attempts: 2
+          action-timeout-s: 60
+          mask-aws-account-id: true
 
-      - name: Verify Identity
-        run: aws sts get-caller-identity
+      - name: Verify assumed identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          identity_arn="$(aws sts get-caller-identity \
+            --query 'Arn' \
+            --output text)"
+
+          if [[ "$identity_arn" != arn:aws:sts::*:assumed-role/github-deployment-role/* ]]; then
+            echo "::error::OIDC succeeded, but GitHub assumed an unexpected IAM role."
+            exit 1
+          fi
+
+          echo "OIDC authentication succeeded."
+          echo "Assumed role: github-deployment-role"
+
+      - name: Report failure guidance
+        if: failure()
+        shell: bash
+        run: |
+          echo "::error::AWS OIDC authentication failed."
+          echo "Check the following:"
+          echo "1. The GitHub environment is named exactly: production"
+          echo "2. AWS_DEPLOY_ROLE_ARN references github-deployment-role"
+          echo "3. AWS_ACCOUNT_ID contains the correct 12-digit account ID"
+          echo "4. The IAM trust subject is:"
+          echo "   repo:gcward18/Gcward_Personal_Blog:environment:production"
+          echo "5. The IAM audience is: sts.amazonaws.com"
