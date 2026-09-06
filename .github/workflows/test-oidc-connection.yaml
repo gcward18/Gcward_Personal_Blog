@@ -11,6 +11,9 @@ jobs:
   test-auth:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
       - name: Validate AWS deployment configuration
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
@@ -25,9 +28,6 @@ jobs:
             echo "::error::AWS_DEPLOY_ROLE_ARN is missing, malformed, or belongs to a different AWS account."
             exit 1
           fi
-
-      - name: Checkout Code
-        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
