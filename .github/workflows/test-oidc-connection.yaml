@@ -11,6 +11,21 @@ jobs:
   test-auth:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate AWS deployment configuration
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          if [[ ! "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]; then
+            echo "::error::AWS_ACCOUNT_ID must be a 12-digit account ID and must be available to this job."
+            exit 1
+          fi
+          expected_role_prefix="arn:aws:iam::${AWS_ACCOUNT_ID}:role/"
+          if [[ "$AWS_DEPLOY_ROLE_ARN" != "$expected_role_prefix"* ]]; then
+            echo "::error::AWS_DEPLOY_ROLE_ARN is missing, malformed, or belongs to a different AWS account."
+            exit 1
+          fi
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
