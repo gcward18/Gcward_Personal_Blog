@@ -36,7 +36,7 @@ Create an IAM role using the **Web identity** trusted-entity type:
 | Audience | `sts.amazonaws.com` |
 | GitHub organization | `gcward18` |
 | Repository | `Gcward_Personal_Blog` |
-| Branch | `main` |
+| GitHub environment | `production` |
 
 The role trust policy should resemble:
 
@@ -53,7 +53,7 @@ The role trust policy should resemble:
       "Condition": {
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:gcward18/Gcward_Personal_Blog:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub": "repo:gcward18@24943004/Gcward_Personal_Blog@1343334195:environment:production"
         }
       }
     }
@@ -61,7 +61,9 @@ The role trust policy should resemble:
 }
 ```
 
-Grant this role only the permissions required by the stacks in this repository. Scope `sts:AssumeRole` to the exact CDK bootstrap role ARNs for this account, region, and bootstrap qualifier; do not grant access to `cdk-*` roles with an unrestricted wildcard. Keep the trust policy restricted to this repository and `main` branch as shown above, and do not store permanent AWS access keys in GitHub.
+GitHub repositories created after July 15, 2026 use immutable owner and repository IDs in the OIDC subject. This repository's owner ID is `24943004` and repository ID is `1343334195`. Obtain these values from GitHub's repository API or, when debugging, from the failed `AssumeRoleWithWebIdentity` CloudTrail event. The trust value must match the token exactly.
+
+Grant this role only the permissions required by the stacks in this repository. Scope `sts:AssumeRole` to the exact CDK bootstrap role ARNs for this account, region, and bootstrap qualifier; do not grant access to `cdk-*` roles with an unrestricted wildcard. Keep the trust policy restricted to this repository and protected `production` environment, and do not store permanent AWS access keys in GitHub.
 
 ## 3. Configure GitHub Actions secrets
 
@@ -102,7 +104,7 @@ Also protect workflow files and infrastructure code with `CODEOWNERS`, and requi
 
 ## 5. Test the pipeline
 
-Trigger the workflow manually from:
+Run **Test AWS OIDC Connection** first. It validates the GitHub configuration, assumes the role, and verifies the resulting STS ARN without deploying resources. Then trigger the deployment workflow manually from:
 
 **GitHub -> Actions -> Deploy Curious Engineer Blog -> Run workflow**
 
@@ -118,7 +120,7 @@ Alternatively, merge an approved article pull request into `main`. The workflow 
 
 | Symptom | Check |
 | --- | --- |
-| GitHub cannot obtain AWS credentials | Confirm the OIDC role ARN, repository name, branch condition, and `id-token: write` workflow permission. |
+| GitHub cannot obtain AWS credentials | Compare the exact CloudTrail OIDC subject with the IAM trust policy, including immutable owner/repository IDs and the `production` environment. Confirm `id-token: write`. |
 | CDK reports that the environment is not bootstrapped | Run `cdk bootstrap` for the exact account and region. |
 | CDK cannot assume a bootstrap role | Add `sts:AssumeRole` only for the exact bootstrap role ARN named in the error, after verifying its account, region, qualifier, and purpose. Do not use an unrestricted `cdk-*` wildcard. |
 | The certificate cannot be found | Confirm `ACM_CERTIFICATE_ARN` references a certificate in `us-east-1`. |
