@@ -407,6 +407,25 @@ input {
   color: var(--text);
 }
 
+.article-body img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 28px auto 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.article-body img + em {
+  display: block;
+  margin-bottom: 28px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 .article-body li {
   margin-bottom: 8px;
 }

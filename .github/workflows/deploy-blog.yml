@@ -121,6 +121,13 @@ jobs:
           set -Eeuo pipefail
           cdk deploy BlogStack --require-approval never
 
+      - name: Verify deployed Author Studio configuration
+        env:
+          BLOG_BASE_URL: https://thecuriousengineerblog.dev
+        run: |
+          set -Eeuo pipefail
+          python -m unittest tests.integration.test_author_config --verbose
+
       - name: Report deployment failure
         if: failure()
         run: |

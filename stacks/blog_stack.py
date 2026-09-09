@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -331,7 +332,8 @@ class BlogStack(Stack):
                 "The frontend production build failed; S3 deployment was stopped."
             ) from error
 
-        frontend_bundle = s3deploy.Source.asset(str(frontend_dir / "dist"))
+        frontend_dist = frontend_dir / "dist"
+        frontend_bundle = s3deploy.Source.asset(str(frontend_dist))
 
         website_deployment = s3deploy.BucketDeployment(
             self, "DeployWebsite",
@@ -339,10 +341,11 @@ class BlogStack(Stack):
             destination_bucket=site_bucket,
             distribution=distribution,
             distribution_paths=["/*"],
+            prune=False,
         )
 
-        # Runtime configuration contains only public identifiers. Writing it
-        # after BucketDeployment prevents pruning from removing the file.
+        # Runtime configuration contains only public identifiers. PutObject
+        # creates the file when missing and replaces it when values change.
         author_config = cdk.Stack.of(self).to_json_string(
             {
                 "clientId": author_client.user_pool_client_id,
@@ -352,31 +355,26 @@ class BlogStack(Stack):
                 "linkedinApiUrl": f"{publishing_api.url}linkedin",
             }
         )
+        author_config_object = {
+            "Bucket": site_bucket.bucket_name,
+            "Key": "author-config.json",
+            "Body": author_config,
+            "ContentType": "application/json",
+            "CacheControl": "no-store",
+        }
         config_writer = cr.AwsCustomResource(
             self,
             "AuthorConfigWriter",
             on_create=cr.AwsSdkCall(
                 service="S3",
                 action="putObject",
-                parameters={
-                    "Bucket": site_bucket.bucket_name,
-                    "Key": "author-config.json",
-                    "Body": author_config,
-                    "ContentType": "application/json",
-                    "CacheControl": "no-store",
-                },
+                parameters=author_config_object,
                 physical_resource_id=cr.PhysicalResourceId.of("author-config"),
             ),
             on_update=cr.AwsSdkCall(
                 service="S3",
                 action="putObject",
-                parameters={
-                    "Bucket": site_bucket.bucket_name,
-                    "Key": "author-config.json",
-                    "Body": author_config,
-                    "ContentType": "application/json",
-                    "CacheControl": "no-store",
-                },
+                parameters=author_config_object,
                 physical_resource_id=cr.PhysicalResourceId.of("author-config"),
             ),
             policy=cr.AwsCustomResourcePolicy.from_sdk_calls(
