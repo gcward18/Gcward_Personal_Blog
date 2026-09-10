@@ -116,6 +116,36 @@ Alternatively, merge an approved article pull request into `main`. The workflow 
 4. Upload only the generated `../frontend/dist` files to S3.
 5. Invalidate CloudFront so the approved article becomes available.
 
+## UAT environment
+
+UAT is a separate deployment at `https://uat.thecuriousengineerblog.dev`. It
+uses the `BlogUatStack` CloudFormation stack and independent website, Cognito,
+API Gateway, Lambda, and DynamoDB resources. Deploying UAT cannot update the
+production `BlogStack`.
+
+Create a GitHub environment named `uat` and add the same secret names used by
+production. Set `ACM_CERTIFICATE_ARN` to a separate, issued `us-east-1`
+certificate covering `uat.thecuriousengineerblog.dev`, and give UAT a unique
+`COGNITO_DOMAIN_PREFIX`.
+
+Add `https://uat.thecuriousengineerblog.dev/author` to the LinkedIn app's
+authorized redirect URLs before testing LinkedIn authorization in UAT.
+
+Allow the UAT environment in the deployment role trust policy alongside
+production:
+
+```json
+"token.actions.githubusercontent.com:sub": [
+  "repo:gcward18@24943004/Gcward_Personal_Blog@1343334195:environment:production",
+  "repo:gcward18@24943004/Gcward_Personal_Blog@1343334195:environment:uat"
+]
+```
+
+The workflow `.github/workflows/deploy-blog-uat.yml` deploys automatically from
+the `develop` branch and can also be started manually. Protect `develop`, limit
+the `uat` GitHub environment to that branch, and run acceptance tests at the UAT
+URL before merging the tested commit into `main` for production deployment.
+
 ## Troubleshooting
 
 | Symptom | Check |

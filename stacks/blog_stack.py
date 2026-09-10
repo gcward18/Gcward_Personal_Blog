@@ -36,6 +36,8 @@ class BlogStack(Stack):
 
         # Retrieve account, domain, and certificate configuration from environment variables
         domain_name = os.getenv("DOMAIN_NAME", "thecuriousengineerblog.dev")
+        hosted_zone_name = os.getenv("HOSTED_ZONE_NAME", domain_name)
+        deployment_stage = os.getenv("DEPLOYMENT_STAGE", "production")
         certificate_arn = os.getenv("ACM_CERTIFICATE_ARN")
         github_owner = os.getenv("GITHUB_OWNER", "gcward18")
         github_repository = os.getenv("GITHUB_REPOSITORY", "Gcward_Personal_Blog")
@@ -46,7 +48,7 @@ class BlogStack(Stack):
         # 1. Fetch your existing Route 53 Hosted Zone
         hosted_zone = route53.HostedZone.from_lookup(
             self, "BlogHostedZone",
-            domain_name=domain_name
+            domain_name=hosted_zone_name
         )
 
         # 2. Reference ACM Certificate using environment variable
@@ -224,7 +226,7 @@ class BlogStack(Stack):
         publishing_api = apigateway.RestApi(
             self,
             "PublishingApi",
-            rest_api_name="Curious Developer Publishing API",
+            rest_api_name=f"Curious Developer Publishing API ({deployment_stage})",
             default_cors_preflight_options=apigateway.CorsOptions(
                 allow_origins=[f"https://{domain_name}", "http://localhost:5173"],
                 allow_methods=["POST", "OPTIONS"],
@@ -406,4 +408,10 @@ class BlogStack(Stack):
             self, "DistributionDomainName",
             value=distribution.distribution_domain_name,
             description="CloudFront Website URL"
+        )
+
+        CfnOutput(
+            self, "SiteUrl",
+            value=f"https://{domain_name}",
+            description=f"Curious Developer {deployment_stage} URL",
         )

@@ -11,15 +11,13 @@ app = cdk.App()
 
 aws_account = os.getenv("AWS_ACCOUNT_ID", os.getenv("CDK_DEFAULT_ACCOUNT"))
 aws_region = os.getenv("AWS_REGION", os.getenv("CDK_DEFAULT_REGION", "us-east-1"))
-email_address = os.getenv("EMAIL", os.getenv("CDK_DEFAULT_EMAIL"))
+deployment_stage = os.getenv("DEPLOYMENT_STAGE", "production").lower()
 
 if not aws_account:
     raise ValueError("AWS_ACCOUNT_ID environment variable must be set.")
 
-if not email_address:
-    raise ValueError(
-        "EMAIL environment variable must be set for AWS Budget notifications."
-    )
+if deployment_stage not in {"production", "uat"}:
+    raise ValueError("DEPLOYMENT_STAGE must be either 'production' or 'uat'.")
 
 # Shared environment configuration
 env_us_east_1 = cdk.Environment(
@@ -30,23 +28,29 @@ env_us_east_1 = cdk.Environment(
 # 1. BlogStack needs env specified because of route53.HostedZone.from_lookup
 BlogStack(
     app,
-    "BlogStack",
+    "BlogStack" if deployment_stage == "production" else "BlogUatStack",
     env=env_us_east_1
 )
 
-# 2. BudgetStack
-BudgetStack(
-    app,
-    "BlogBudgetStack",
-    email_address=email_address,
-    env=env_us_east_1
-)
+if deployment_stage == "production":
+    email_address = os.getenv("EMAIL", os.getenv("CDK_DEFAULT_EMAIL"))
+    if not email_address:
+        raise ValueError(
+            "EMAIL environment variable must be set for AWS Budget notifications."
+        )
 
-# 3. LlmServiceStack
-LlmServiceStack(
-    app,
-    "LlmServiceStack",
-    env=env_us_east_1
-)
+    # Shared account-level services are provisioned only with production.
+    BudgetStack(
+        app,
+        "BlogBudgetStack",
+        email_address=email_address,
+        env=env_us_east_1
+    )
+
+    LlmServiceStack(
+        app,
+        "LlmServiceStack",
+        env=env_us_east_1
+    )
 
 app.synth()
