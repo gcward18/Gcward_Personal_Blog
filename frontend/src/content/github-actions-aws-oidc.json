@@ -1,5 +1,7 @@
 {
   "id": "github-actions-aws-oidc",
+  "image": "/images/articles/github-actions-aws-oidc.jpg",
+  "imageAlt": "A secure automated deployment pipeline carrying temporary identities into cloud infrastructure",
   "title": "Deploying to AWS from GitHub Actions with OIDC",
   "snippet": "A practical, security-focused guide to replacing long-lived AWS keys with GitHub OIDC, testing the connection, and debugging immutable subject-claim mismatches.",
   "tags": ["AWS", "GitHub Actions", "OIDC", "IAM", "DevOps", "Security"],

@@ -3,6 +3,7 @@ import { Routes, Route, Link, useParams } from 'react-router-dom';
 import {ArticleReader } from './components/ArticleReader.jsx'
 import { ARTICLES } from './data/articleCatalog.js';
 import { AuthorStudio } from './components/AuthorStudio.jsx';
+import { VIDEOS, getYouTubeThumbnail, getYouTubeUrl } from './data/videoCatalog.js';
 
 function ThemeToggle() {
   const [theme, setTheme] = useState(() =>
@@ -67,6 +68,8 @@ function Header() {
 
 function Home() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [section, setSection] = useState('articles');
+  const [videoCategory, setVideoCategory] = useState('All');
 
   const filteredArticles = ARTICLES.filter((article) => {
     if (!searchQuery) return true;
@@ -82,11 +85,48 @@ function Home() {
     return matchesTitle || matchesSnippet || matchesTags;
   });
 
+  const videoCategories = ['All', ...new Set(VIDEOS.map((video) => video.category))];
+  const filteredVideos = VIDEOS.filter((video) => {
+    const matchesCategory = videoCategory === 'All' || video.category === videoCategory;
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch = !query || [
+      video.title,
+      video.channel,
+      video.description,
+      video.category,
+      ...(video.tags ?? []),
+    ].some((value) => String(value).toLowerCase().includes(query));
+
+    return matchesCategory && matchesSearch;
+  });
+
+  const switchSection = (nextSection) => {
+    setSection(nextSection);
+    setSearchQuery('');
+  };
+
   return (
     <>
       <div className="home-controls">
         <Header />
         <hr className="section-divider" />
+
+        <nav className="content-tabs" aria-label="Content sections">
+          <button
+            className={section === 'articles' ? 'active' : ''}
+            type="button"
+            onClick={() => switchSection('articles')}
+          >
+            Articles <span>{ARTICLES.length}</span>
+          </button>
+          <button
+            className={section === 'videos' ? 'active' : ''}
+            type="button"
+            onClick={() => switchSection('videos')}
+          >
+            Videos <span>{VIDEOS.length}</span>
+          </button>
+        </nav>
 
         <div className="search-section">
           <div className="search-bar">
@@ -95,7 +135,7 @@ function Home() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search articles by title, tag, or content..."
+              placeholder={`Search ${section} by title, tag, or ${section === 'videos' ? 'channel' : 'content'}...`}
             />
             {searchQuery && (
               <button
@@ -110,23 +150,43 @@ function Home() {
           </div>
 
           <div className="search-stats">
-            {searchQuery.trim() === ''
-              ? `Showing all ${ARTICLES.length} articles`
-              : `Found ${filteredArticles.length} article${
-                  filteredArticles.length === 1 ? '' : 's'
-                } for "${searchQuery}"`}
+            {section === 'articles'
+              ? (searchQuery.trim() === ''
+                ? `Showing all ${ARTICLES.length} articles`
+                : `Found ${filteredArticles.length} article${filteredArticles.length === 1 ? '' : 's'} for "${searchQuery}"`)
+              : `${filteredVideos.length} video${filteredVideos.length === 1 ? '' : 's'} in ${videoCategory}`}
           </div>
         </div>
       </div>
 
       <main className="search-results">
-        {filteredArticles.length === 0 ? (
+        {section === 'videos' && (
+          <div className="category-filters" aria-label="Filter videos by category">
+            {videoCategories.map((category) => (
+              <button
+                key={category}
+                className={videoCategory === category ? 'active' : ''}
+                type="button"
+                onClick={() => setVideoCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {section === 'articles' && filteredArticles.length === 0 ? (
           <div className="no-results">
             <p>No matching articles found.</p>
           </div>
-        ) : (
+        ) : section === 'articles' ? (
           filteredArticles.map((article) => (
             <article key={article.id} className="result-card">
+              {article.image && (
+                <Link className="article-thumbnail" to={`/pages/${article.id}`} tabIndex="-1" aria-hidden="true">
+                  <img src={article.image} alt="" loading="lazy" />
+                </Link>
+              )}
               <div className="card-content">
                 <h2 className="result-title">
                   <Link to={`/pages/${article.id}`}>{article.title}</Link>
@@ -147,6 +207,44 @@ function Home() {
               </div>
             </article>
           ))
+        ) : filteredVideos.length === 0 ? (
+          <div className="no-results">
+            <p>No matching videos found.</p>
+          </div>
+        ) : (
+          <div className="video-grid">
+            {filteredVideos.map((video) => (
+              <article key={video.id} className="video-card">
+                <a
+                  className="video-thumbnail"
+                  href={getYouTubeUrl(video.youtubeId, video.startSeconds)}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Watch ${video.title} on YouTube`}
+                >
+                  <img src={getYouTubeThumbnail(video.youtubeId)} alt="" loading="lazy" />
+                  <span className="play-button" aria-hidden="true">▶</span>
+                </a>
+                <div className="video-content">
+                  <p className="video-category">{video.category}</p>
+                  <h2 className="result-title">
+                    <a href={getYouTubeUrl(video.youtubeId, video.startSeconds)} target="_blank" rel="noreferrer">
+                      {video.title}
+                    </a>
+                  </h2>
+                  <p className="video-channel">{video.channel}</p>
+                  <p className="result-snippet">{video.description}</p>
+                  <div className="result-tags">
+                    {video.tags.map((tag) => (
+                      <button key={tag} className="tag tag-button" type="button" onClick={() => setSearchQuery(tag)}>
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         )}
       </main>
     </>

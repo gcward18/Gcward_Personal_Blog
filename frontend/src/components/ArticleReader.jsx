@@ -51,6 +51,9 @@ export function ArticleReader() {
       <p className="meta">
         [SYS_DATE: {article.date}] | [CAT: {article.category}]
       </p>
+      {article.image && (
+        <img className="article-hero" src={article.image} alt={article.imageAlt ?? ''} />
+      )}
 
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}

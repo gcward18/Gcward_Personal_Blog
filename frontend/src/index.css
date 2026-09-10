@@ -79,13 +79,44 @@ input {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  height: min(150px, 20dvh);
-  max-height: 20dvh;
+  min-height: 176px;
   padding: 8px 0;
   overflow: hidden;
   background: color-mix(in srgb, var(--page) 94%, transparent);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(14px);
+}
+
+.content-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.content-tabs button,
+.category-filters button {
+  padding: 5px 10px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.content-tabs button span {
+  margin-left: 4px;
+  color: var(--muted);
+}
+
+.content-tabs button.active,
+.content-tabs button:hover,
+.category-filters button.active,
+.category-filters button:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .profile-header-container {
@@ -278,13 +309,132 @@ input {
   padding: 30px 0 64px;
 }
 
+.category-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.video-card {
+  overflow: hidden;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.video-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.video-thumbnail {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--surface);
+}
+
+.video-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+
+.video-card:hover .video-thumbnail img {
+  transform: scale(1.025);
+}
+
+.play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  padding-left: 3px;
+  color: #fff;
+  background: color-mix(in srgb, var(--accent) 88%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.28);
+  transform: translate(-50%, -50%);
+}
+
+.video-content {
+  padding: 20px;
+}
+
+.video-category,
+.video-channel {
+  font-family: var(--font-code);
+  font-size: 0.68rem;
+}
+
+.video-category {
+  margin: 0 0 7px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.video-channel {
+  margin: -4px 0 12px;
+  color: var(--muted);
+}
+
+.tag-button {
+  cursor: pointer;
+}
+
+.tag-button:hover,
+.tag-button:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+  outline: none;
+}
+
 .result-card {
   position: relative;
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
   padding: 26px 28px;
   background: var(--surface-raised);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.article-thumbnail {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background: var(--surface);
+  border-radius: 9px;
+}
+
+.article-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+
+.result-card:hover .article-thumbnail img {
+  transform: scale(1.025);
 }
 
 .result-card::before {
@@ -416,6 +566,12 @@ input {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+}
+
+.article-body .article-hero {
+  aspect-ratio: 16 / 9;
+  margin: 26px 0 36px;
+  object-fit: cover;
 }
 
 .article-body img + em {
@@ -1099,7 +1255,7 @@ input {
   }
 
   .home-controls {
-    height: min(132px, 20dvh);
+    min-height: 176px;
     padding-top: 7px;
   }
 
@@ -1124,7 +1280,17 @@ input {
   }
 
   .result-card {
+    grid-template-columns: 1fr;
+    gap: 18px;
     padding: 22px 20px;
+  }
+
+  .article-thumbnail {
+    aspect-ratio: 16 / 9;
+  }
+
+  .video-grid {
+    grid-template-columns: 1fr;
   }
 
   .article-body {

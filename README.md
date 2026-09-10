@@ -42,6 +42,7 @@ AWS free offers and pricing can change, and exceeding an allowance can create ch
 | Path | Purpose |
 | --- | --- |
 | `frontend/` | React/Vite blog, article catalog, and author interface |
+| `frontend/src/data/videoCatalog.js` | Curated YouTube videos, categories, and tags |
 | `stacks/blog_stack.py` | Static hosting, CDN, authentication, and publishing API |
 | `stacks/budget_stack.py` | Monthly cost alerts |
 | `stacks/llm_stack.py` | Experimental LLM service infrastructure |
@@ -57,6 +58,10 @@ cd frontend
 npm install
 npm run dev
 ```
+
+To add a video, append an entry to `frontend/src/data/videoCatalog.js` with the
+YouTube video ID, title, channel, description, category, and tags. The site
+automatically creates its thumbnail, category filter, and searchable video card.
 
 ## Deploy the infrastructure
 

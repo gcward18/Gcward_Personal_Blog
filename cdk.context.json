@@ -2,5 +2,9 @@
   "hosted-zone:account=211663170976:domainName=thecuriousengineerblog.dev:region=us-east-1": {
     "Id": "/hostedzone/Z09546383OTE25Q6ONFMX",
     "Name": "thecuriousengineerblog.dev."
+  },
+  "hosted-zone:account=351458008043:domainName=thecuriousengineerblog.dev:region=us-east-1": {
+    "Id": "/hostedzone/Z0525153JH851Q52AHSW",
+    "Name": "thecuriousengineerblog.dev."
   }
 }

@@ -1,5 +1,7 @@
 {
   "id": "speech-to-text",
+  "image": "/images/articles/speech-to-text.jpg",
+  "imageAlt": "Sound waves becoming structured text and automated workflow steps",
   "title": "Speech-to-Text (STT)",
   "snippet": "A practical guide to speech-to-text, including Amazon Transcribe and Nova Sonic, with LangChain workflow that converts recorded speech into searches, answers, and automated actions.",
   "tags": [

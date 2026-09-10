@@ -2,6 +2,8 @@
 export const ARTICLES = [
   {
     id: 'aws-cross-account-iam-roles',
+    image: '/images/articles/aws-cross-account-iam-roles.jpg',
+    imageAlt: 'Two cloud environments connected by a guarded bridge carrying a temporary access key',
     siteName: 'AWS Identity & Access',
     siteUrl: 'thecuriousengineerblog.dev › pages › aws-cross-account-iam-roles',
     title: 'How AWS IAM Roles Enable Secure Cross-Account Access',
@@ -190,6 +192,8 @@ The key mental model is simple: **Account B owns the role and decides who can as
   },
   {
     id: 'zero-cost-serverless-blog',
+    image: '/images/articles/zero-cost-serverless-blog.jpg',
+    imageAlt: 'A lightweight digital publication distributed from private cloud storage around the globe',
     siteName: 'System Architecture',
     siteUrl: '[https://thecuriousengineerblog.dev](https://thecuriousengineerblog.dev) › pages › zero-cost-serverless-blog',
     title: 'Building a Near-Zero-Cost Serverless Blog with AWS CDK, S3, and Python',
@@ -393,6 +397,8 @@ See the current [Route 53 pricing](https://aws.amazon.com/route53/pricing/) befo
   },
   {
     id: 'aws-cdk',
+    image: '/images/articles/aws-cdk.jpg',
+    imageAlt: 'Code-like ribbons transforming into modular cloud infrastructure',
     siteName: 'Why AWS CDK',
     siteUrl: '[https://thecuriousengineerblog.dev](https://thecuriousengineerblog.dev) › pages › aws-cdk',
     title: 'Demystifying AWS CDK: Infrastructure as Real Code',
@@ -425,6 +431,8 @@ By coupling S3 for asset storage and CloudFront as a CDN, CDK allows you to prov
   },
   {
     id: 'cosine-similarity',
+    image: '/images/articles/cosine-similarity.jpg',
+    imageAlt: 'Aligned vectors pointing toward a cluster of nearby points in a high-dimensional space',
     siteName: 'Cosine Similarity',
     siteUrl: '[https://thecuriousengineerblog.dev](https://thecuriousengineerblog.dev) › pages › cosine-similarity',
     title: 'Light Bulb Moment: Cosine Similarity for finding nearest neighbors in high-dimensional vector space',
