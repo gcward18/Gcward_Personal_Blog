@@ -1,7 +1,7 @@
 {
   "id": "building-agentic-workflows",
   "image": "/images/articles/agentic-workflow-architecture.svg",
-  "imageAlt": "Agentic workflow connecting a user, LangGraph, a model, memory, tools, and an evaluation loop",
+  "imageAlt": "A left-to-right agent workflow that queries data and tools, evaluates the collected information, and either answers or loops back for more context",
   "title": "Building Agentic Workflows with LangGraph",
   "snippet": "A practical introduction to agents as complete systems: models, memory, tools, workflows, infrastructure, data, and the product experience around them.",
   "tags": [

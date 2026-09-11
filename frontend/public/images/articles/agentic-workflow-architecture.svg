@@ -1,73 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description">
-  <title id="title">Agentic workflow architecture</title>
-  <desc id="description">A user request enters a LangGraph workflow. An agent node uses a language model, memory, and tools, then an evaluation node either returns an answer or loops back for another tool call.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" role="img" aria-labelledby="title description">
+  <title id="title">Agent information-gathering workflow</title>
+  <desc id="description">A left-to-right agent workflow. The agent queries data and tools, evaluates whether enough information has been gathered, and either produces an answer or loops back to continue.</desc>
   <defs>
-    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#160b35"/>
-      <stop offset="1" stop-color="#481cab"/>
-    </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#09031a" flood-opacity=".32"/>
-    </filter>
-    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
-      <path d="M0 0 12 6 0 12z" fill="#77e1c2"/>
-    </marker>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#faf8ff"/><stop offset="1" stop-color="#eee9fb"/></linearGradient>
+    <linearGradient id="agentFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#481cab"/><stop offset="1" stop-color="#6737c9"/></linearGradient>
+    <linearGradient id="answerFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#166d5d"/><stop offset="1" stop-color="#238c78"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="170%"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#231444" flood-opacity=".13"/></filter>
+    <marker id="arrowPurple" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0 12 6 0 12z" fill="#481cab"/></marker>
+    <marker id="arrowAmber" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0 12 6 0 12z" fill="#d18400"/></marker>
     <style>
-      .card { fill: #fff; stroke: #cfc3ef; stroke-width: 3; filter: url(#shadow); }
-      .core { fill: #f4efff; stroke: #9d7ce8; stroke-width: 4; filter: url(#shadow); }
-      .label { font: 700 29px system-ui, -apple-system, sans-serif; fill: #261255; text-anchor: middle; }
-      .small { font: 500 20px system-ui, -apple-system, sans-serif; fill: #59477e; text-anchor: middle; }
-      .flow { fill: none; stroke: #77e1c2; stroke-width: 7; marker-end: url(#arrow); }
-      .loop { fill: none; stroke: #f7bd55; stroke-width: 6; stroke-dasharray: 14 12; marker-end: url(#arrow); }
-      .flow-label { font: 700 18px system-ui, -apple-system, sans-serif; fill: #fff; text-anchor: middle; }
+      .heading{font:800 38px system-ui,-apple-system,sans-serif;fill:#241343;text-anchor:middle}.subheading{font:500 20px system-ui,-apple-system,sans-serif;fill:#6e6185;text-anchor:middle}.card-title{font:750 28px system-ui,-apple-system,sans-serif;text-anchor:middle}.card-copy{font:500 19px system-ui,-apple-system,sans-serif;text-anchor:middle}.flow{fill:none;stroke:#481cab;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrowPurple)}.loop{fill:none;stroke:#d18400;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:12 11;marker-end:url(#arrowAmber)}.flow-label{font:700 18px system-ui,-apple-system,sans-serif;fill:#59477e;text-anchor:middle}.icon{fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
     </style>
   </defs>
+  <rect width="1600" height="720" rx="36" fill="url(#background)"/>
+  <text class="heading" x="800" y="68">How an Agent Gathers Enough Context</text>
+  <text class="subheading" x="800" y="105">Reason, query, evaluate, and repeat until the task is ready to complete</text>
 
-  <rect width="1600" height="900" rx="42" fill="url(#background)"/>
-  <text x="800" y="75" fill="#fff" font-family="system-ui, -apple-system, sans-serif" font-size="40" font-weight="800" text-anchor="middle">An Agent Is a System, Not Just a Model</text>
-  <text x="800" y="116" fill="#d8cdf6" font-family="system-ui, -apple-system, sans-serif" font-size="21" text-anchor="middle">LangGraph coordinates state, decisions, tool calls, and stopping conditions</text>
+  <g filter="url(#shadow)"><rect x="65" y="275" width="270" height="190" rx="28" fill="url(#agentFill)" stroke="#7952d4" stroke-width="3"/></g>
+  <g color="#fff" transform="translate(176 302)"><rect class="icon" x="0" y="12" width="48" height="34" rx="8"/><path class="icon" d="M24 12V2M10 47v7M38 47v7"/><circle cx="15" cy="29" r="3.5" fill="currentColor"/><circle cx="33" cy="29" r="3.5" fill="currentColor"/></g>
+  <text class="card-title" x="200" y="393" fill="#fff">Agent</text><text class="card-copy" x="200" y="428" fill="#ddd3f6">reason + route</text>
 
-  <rect class="card" x="65" y="332" width="225" height="150" rx="28"/>
-  <text class="label" x="177" y="395">User</text>
-  <text class="small" x="177" y="432">request</text>
+  <g filter="url(#shadow)"><rect x="430" y="205" width="470" height="330" rx="32" fill="#fff" stroke="#c9b8ec" stroke-width="3"/></g>
+  <text x="468" y="253" font-family="system-ui,-apple-system,sans-serif" font-size="25" font-weight="750" fill="#241343">Query</text>
+  <text x="468" y="284" font-family="system-ui,-apple-system,sans-serif" font-size="17" font-weight="500" fill="#6e6185">gather relevant context</text>
+  <rect x="475" y="325" width="170" height="155" rx="24" fill="#e4f8f4" stroke="#48cab1" stroke-width="3"/>
+  <g color="#167462" transform="translate(541 346)"><ellipse class="icon" cx="19" cy="7" rx="18" ry="7"/><path class="icon" d="M1 7v33c0 4 8 7 18 7s18-3 18-7V7M1 23c0 4 8 7 18 7s18-3 18-7"/></g>
+  <text class="card-title" x="560" y="427" fill="#166d5d">Data</text><text class="card-copy" x="560" y="457" fill="#3e766b">retrieve facts</text>
+  <rect x="685" y="325" width="170" height="155" rx="24" fill="#eee9fb" stroke="#a987ff" stroke-width="3"/>
+  <g color="#481cab" transform="translate(746 346)"><path class="icon" d="M5 4l30 30M35 4L5 34M4 4l7 1-6 6-1-7zM36 4l-1 7-6-6 7-1zM4 36l1-7 6 6-7 1zM36 36l-7-1 6-6 1 7z"/></g>
+  <text class="card-title" x="770" y="427" fill="#481cab">Tools</text><text class="card-copy" x="770" y="457" fill="#67558e">take action</text>
 
-  <rect class="core" x="405" y="220" width="660" height="390" rx="42"/>
-  <text class="label" x="735" y="275">LangGraph workflow</text>
+  <g filter="url(#shadow)"><rect x="990" y="275" width="255" height="190" rx="28" fill="#fff" stroke="#a987ff" stroke-width="3"/></g>
+  <g color="#481cab" transform="translate(1090 305)"><circle class="icon" cx="19" cy="19" r="16"/><path class="icon" d="M31 31l14 14"/></g>
+  <text class="card-title" x="1118" y="393" fill="#241343">Evaluate</text><text class="card-copy" x="1118" y="428" fill="#6e6185">enough information?</text>
 
-  <rect class="card" x="455" y="325" width="210" height="145" rx="24"/>
-  <text class="label" x="560" y="385">Agent</text>
-  <text class="small" x="560" y="423">reason + route</text>
+  <g filter="url(#shadow)"><rect x="1335" y="275" width="215" height="190" rx="28" fill="url(#answerFill)" stroke="#48cab1" stroke-width="3"/></g>
+  <g color="#fff" transform="translate(1419 310)"><path class="icon" d="M2 20l13 13L42 2"/></g>
+  <text class="card-title" x="1443" y="393" fill="#fff">Answer</text><text class="card-copy" x="1443" y="428" fill="#c9f2ea">task complete</text>
 
-  <rect class="card" x="805" y="325" width="210" height="145" rx="24"/>
-  <text class="label" x="910" y="385">Evaluate</text>
-  <text class="small" x="910" y="423">done or continue?</text>
-
-  <rect class="card" x="345" y="690" width="245" height="135" rx="26"/>
-  <text class="label" x="467" y="747">Model</text>
-  <text class="small" x="467" y="783">reasoning engine</text>
-
-  <rect class="card" x="675" y="690" width="245" height="135" rx="26"/>
-  <text class="label" x="797" y="747">Memory</text>
-  <text class="small" x="797" y="783">state + context</text>
-
-  <rect class="card" x="1005" y="690" width="245" height="135" rx="26"/>
-  <text class="label" x="1127" y="747">Tools</text>
-  <text class="small" x="1127" y="783">data + actions</text>
-
-  <rect class="card" x="1285" y="332" width="250" height="150" rx="28"/>
-  <text class="label" x="1410" y="395">Answer</text>
-  <text class="small" x="1410" y="432">or approved action</text>
-
-  <path class="flow" d="M290 407 H405"/>
-  <path class="flow" d="M665 397 H805"/>
-  <path class="flow" d="M1065 407 H1285"/>
-  <path class="flow" d="M560 470 V645 Q560 665 540 690"/>
-  <path class="flow" d="M610 470 V610 Q610 650 735 690"/>
-  <path class="flow" d="M660 470 V570 Q660 635 1065 690"/>
-  <path class="loop" d="M910 325 V175 Q910 150 880 150 H560 Q525 150 525 220"/>
-
-  <text class="flow-label" x="347" y="386">input</text>
-  <text class="flow-label" x="735" y="376">state</text>
-  <text class="flow-label" x="1174" y="386">finish</text>
-  <text x="720" y="171" fill="#f7bd55" font-family="system-ui, -apple-system, sans-serif" font-size="19" font-weight="700" text-anchor="middle">another step is required</text>
+  <path class="flow" d="M335 370H420"/><path class="flow" d="M900 370H980"/><path class="flow" d="M1245 370H1325"/>
+  <text class="flow-label" x="1285" y="347">if ready</text>
+  <path class="loop" d="M1118 275V170Q1118 145 1093 145H225Q200 145 200 170V265"/>
+  <rect x="578" y="125" width="205" height="40" rx="20" fill="#fff6df" stroke="#edbd60" stroke-width="2"/>
+  <text x="680" y="151" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="750" fill="#9b6000" text-anchor="middle">not enough—continue</text>
+  <text x="800" y="635" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="650" fill="#59477e" text-anchor="middle">The workflow owns the loop and its stopping limits; the model supplies the reasoning.</text>
 </svg>
