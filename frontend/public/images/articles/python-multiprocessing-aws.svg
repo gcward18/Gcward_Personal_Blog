@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 820" role="img" aria-labelledby="title description">
+  <title id="title">Fork and spawn with AWS credentials</title>
+  <desc id="description">Comparison of fork, which copies parent memory, and spawn, which starts a fresh interpreter. Both workers receive an environment snapshot, and each creates its own boto3 session and client.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#faf8ff"/><stop offset="1" stop-color="#eee9fb"/></linearGradient>
+    <linearGradient id="parent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#481cab"/><stop offset="1" stop-color="#6838ca"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="170%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#231444" flood-opacity=".14"/></filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0 12 6 0 12z" fill="#481cab"/></marker>
+    <style>
+      .heading{font:800 38px system-ui,-apple-system,sans-serif;fill:#241343;text-anchor:middle}.subheading{font:500 20px system-ui,-apple-system,sans-serif;fill:#6e6185;text-anchor:middle}.title{font:750 28px system-ui,-apple-system,sans-serif;text-anchor:middle}.copy{font:500 19px system-ui,-apple-system,sans-serif;text-anchor:middle}.detail{font:650 18px system-ui,-apple-system,sans-serif;fill:#59477e}.flow{fill:none;stroke:#481cab;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1600" height="820" rx="36" fill="url(#background)"/>
+  <text class="heading" x="800" y="66">Python Multiprocessing + AWS Credentials</text>
+  <text class="subheading" x="800" y="104">The worker start method changes memory—not the rule to create boto3 clients inside each process</text>
+
+  <g filter="url(#shadow)"><rect x="80" y="280" width="300" height="220" rx="28" fill="url(#parent)" stroke="#7952d4" stroke-width="3"/></g>
+  <text class="title" x="230" y="350" fill="#fff">Parent process</text>
+  <text class="copy" x="230" y="394" fill="#ddd3f6">Python state</text>
+  <text class="copy" x="230" y="428" fill="#ddd3f6">environment</text>
+  <text class="copy" x="230" y="462" fill="#ddd3f6">task inputs</text>
+
+  <path class="flow" d="M380 340H505"/>
+  <path class="flow" d="M380 440H505"/>
+
+  <g filter="url(#shadow)"><rect x="520" y="165" width="455" height="245" rx="30" fill="#fff" stroke="#a987ff" stroke-width="3"/></g>
+  <rect x="552" y="194" width="103" height="38" rx="19" fill="#eee9fb"/><text x="604" y="220" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="750" fill="#481cab" text-anchor="middle">FORK</text>
+  <text class="title" x="748" y="278" fill="#241343">Copy parent memory</text>
+  <text class="copy" x="748" y="317" fill="#6e6185">Globals reflect state at fork time</text>
+  <text class="copy" x="748" y="351" fill="#6e6185">Inherited sockets may be unsafe</text>
+  <text x="944" y="389" font-family="system-ui,-apple-system,sans-serif" font-size="16" font-weight="650" fill="#9b6000" text-anchor="end">No initial target/argument pickle</text>
+
+  <g filter="url(#shadow)"><rect x="520" y="450" width="455" height="245" rx="30" fill="#fff" stroke="#48cab1" stroke-width="3"/></g>
+  <rect x="552" y="479" width="116" height="38" rx="19" fill="#e4f8f4"/><text x="610" y="505" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="750" fill="#166d5d" text-anchor="middle">SPAWN</text>
+  <text class="title" x="748" y="563" fill="#241343">Fresh interpreter</text>
+  <text class="copy" x="748" y="602" fill="#6e6185">Imports the module again</text>
+  <text class="copy" x="748" y="636" fill="#6e6185">Targets and arguments must pickle</text>
+  <text x="944" y="674" font-family="system-ui,-apple-system,sans-serif" font-size="16" font-weight="650" fill="#166d5d" text-anchor="end">Use the __main__ guard</text>
+
+  <path class="flow" d="M975 287H1090"/>
+  <path class="flow" d="M975 572H1090"/>
+
+  <g filter="url(#shadow)"><rect x="1105" y="252" width="415" height="330" rx="32" fill="#fff" stroke="#c9b8ec" stroke-width="3"/></g>
+  <text class="title" x="1312" y="310" fill="#241343">Worker process</text>
+  <rect x="1150" y="347" width="325" height="70" rx="18" fill="#fff6df" stroke="#edbd60" stroke-width="2"/>
+  <text class="copy" x="1312" y="389" fill="#815100">Environment snapshot</text>
+  <rect x="1150" y="440" width="325" height="98" rx="18" fill="#e4f8f4" stroke="#48cab1" stroke-width="2"/>
+  <text class="copy" x="1312" y="479" fill="#166d5d">Create a new boto3 Session</text>
+  <text class="copy" x="1312" y="512" fill="#166d5d">and client here</text>
+
+  <text class="detail" x="800" y="764" text-anchor="middle">Never share a live boto3 session, client, resource, or connection pool across processes.</text>
+</svg>

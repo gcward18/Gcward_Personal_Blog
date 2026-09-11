@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 760" role="img" aria-labelledby="title description">
+  <title id="title">How Python pickle serializes objects</title>
+  <desc id="description">A Python object graph is serialized into a binary byte stream, transported or stored, and reconstructed in a trusted Python environment where referenced classes and functions must remain importable.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#faf8ff"/><stop offset="1" stop-color="#eee9fb"/></linearGradient>
+    <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#481cab"/><stop offset="1" stop-color="#6b3bd0"/></linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#166d5d"/><stop offset="1" stop-color="#26917d"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="170%"><feDropShadow dx="0" dy="11" stdDeviation="13" flood-color="#231444" flood-opacity=".14"/></filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0 12 6 0 12z" fill="#481cab"/></marker>
+    <style>
+      .heading{font:800 40px system-ui,-apple-system,sans-serif;fill:#241343;text-anchor:middle}.subheading{font:500 21px system-ui,-apple-system,sans-serif;fill:#6e6185;text-anchor:middle}.title{font:750 29px system-ui,-apple-system,sans-serif;text-anchor:middle}.copy{font:500 18px system-ui,-apple-system,sans-serif;text-anchor:middle}.flow{fill:none;stroke:#481cab;stroke-width:6;stroke-linecap:round;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1600" height="760" rx="38" fill="url(#background)"/>
+  <text class="heading" x="800" y="68">Pickle Turns Python State into Bytes</text>
+  <text class="subheading" x="800" y="108">Useful inside trusted Python systems—not a safe interchange format</text>
+
+  <g filter="url(#shadow)"><rect x="65" y="235" width="345" height="310" rx="30" fill="url(#purple)" stroke="#7952d4" stroke-width="3"/></g>
+  <text class="title" x="237" y="295" fill="#fff">Python object graph</text>
+  <rect x="108" y="330" width="110" height="72" rx="16" fill="#eee9fb"/><text class="copy" x="163" y="374" fill="#481cab">dict</text>
+  <rect x="258" y="330" width="110" height="72" rx="16" fill="#e4f8f4"/><text class="copy" x="313" y="374" fill="#166d5d">list</text>
+  <rect x="108" y="430" width="260" height="72" rx="16" fill="#fff"/><text class="copy" x="238" y="474" fill="#241343">class instance</text>
+
+  <path class="flow" d="M410 390H535"/>
+  <text x="472" y="365" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="750" fill="#59477e" text-anchor="middle">dumps</text>
+
+  <g filter="url(#shadow)"><rect x="550" y="270" width="500" height="240" rx="30" fill="#fff" stroke="#a987ff" stroke-width="3"/></g>
+  <text class="title" x="800" y="325" fill="#241343">Binary pickle stream</text>
+  <text x="800" y="390" font-family="monospace" font-size="27" font-weight="650" fill="#481cab" text-anchor="middle">80 05 95 ... 8c 04 ... 94 2e</text>
+  <text class="copy" x="800" y="438" fill="#6e6185">store • cache • queue • send</text>
+  <rect x="654" y="465" width="292" height="34" rx="17" fill="#fff6df"/><text x="800" y="488" font-family="system-ui,-apple-system,sans-serif" font-size="16" font-weight="750" fill="#9b6000" text-anchor="middle">Python-specific and executable</text>
+
+  <path class="flow" d="M1050 390H1175"/>
+  <text x="1112" y="365" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="750" fill="#59477e" text-anchor="middle">loads</text>
+
+  <g filter="url(#shadow)"><rect x="1190" y="235" width="345" height="310" rx="30" fill="url(#green)" stroke="#48cab1" stroke-width="3"/></g>
+  <text class="title" x="1362" y="295" fill="#fff">Reconstructed object</text>
+  <text class="copy" x="1362" y="357" fill="#c9f2ea">same relationships</text>
+  <text class="copy" x="1362" y="395" fill="#c9f2ea">new runtime objects</text>
+  <text class="copy" x="1362" y="433" fill="#c9f2ea">imports required</text>
+  <rect x="1242" y="470" width="240" height="45" rx="22" fill="#e4f8f4"/><text x="1362" y="499" font-family="system-ui,-apple-system,sans-serif" font-size="17" font-weight="800" fill="#166d5d" text-anchor="middle">TRUSTED INPUT ONLY</text>
+
+  <rect x="334" y="636" width="932" height="58" rx="28" fill="#fff6df" stroke="#edbd60" stroke-width="2"/>
+  <text x="800" y="673" font-family="system-ui,-apple-system,sans-serif" font-size="20" font-weight="750" fill="#815100" text-anchor="middle">Unpickling untrusted bytes can execute arbitrary code. Prefer JSON at trust boundaries.</text>
+</svg>
