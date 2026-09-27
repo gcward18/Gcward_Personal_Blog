@@ -13,3 +13,8 @@ cdk.out
 
 .DS_Store
 .idea
+
+# Local Xcode state and build products
+ios/**/xcuserdata/
+ios/**/DerivedData/
+ios/build/

@@ -110,6 +110,15 @@ class BlogStack(Stack):
                 ],
             ),
         )
+        mobile_client = author_pool.add_client(
+            "CompanionMobileClient",
+            generate_secret=False,
+            o_auth=cognito.OAuthSettings(
+                flows=cognito.OAuthFlows(authorization_code_grant=True),
+                scopes=[cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL],
+                callback_urls=["curiousengineer://oauth/callback"],
+            ),
+        )
         author_domain = author_pool.add_domain(
             "AuthorDomain",
             cognito_domain=cognito.CognitoDomainOptions(
@@ -351,6 +360,8 @@ class BlogStack(Stack):
         author_config = cdk.Stack.of(self).to_json_string(
             {
                 "clientId": author_client.user_pool_client_id,
+                "mobileClientId": mobile_client.user_pool_client_id,
+                "tokenUrl": f"{author_domain.base_url()}/oauth2/token",
                 "authorizeUrl": f"{author_domain.base_url()}/oauth2/authorize",
                 "publishApiUrl": f"{publishing_api.url}articles",
                 "assistantApiUrl": f"{publishing_api.url}assistant",

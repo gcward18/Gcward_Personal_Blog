@@ -74,3 +74,15 @@ for (const article of articles) {
 }
 
 console.log(`Generated social metadata pages for ${articles.length} articles.`);
+
+// Public, versioned companion feed generated from the very same article catalog.
+const ids = new Set();
+const feed = articles.map(({ id, title, snippet, date, category, tags, content }) => {
+  if (ids.has(id)) throw new Error(`Duplicate article id: ${id}`);
+  ids.add(id);
+  if (!title || typeof content !== 'string') throw new Error(`Invalid article: ${id}`);
+  return { id, title, snippet: snippet || '', date, category, tags: tags || [], content,
+    url: `${siteUrl}/pages/${encodeURIComponent(id)}/` };
+}).sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
+await mkdir(path.join(distDirectory, 'api'), { recursive: true });
+await writeFile(path.join(distDirectory, 'api', 'articles.json'), JSON.stringify({ version: 1, articles: feed }));

@@ -101,3 +101,10 @@ cdk deploy   # Deploy stacks to AWS
 - Expand the authoring and review workflow.
 - Add agentic research and content-assistance features with clear human approval steps.
 - Keep the public site static, fast, secure, and inexpensive to operate.
+
+## iPhone companion
+
+The native SwiftUI app in `ios/` provides Home → Article → Ask using the same
+published blog content and existing Cognito/Bedrock backend. See
+[iOS setup and architecture](ios/README.md) for Xcode, signing, deployment and
+validation instructions. Library and Labs are reserved for future work.
